@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Siems schaakspel</title>
+    <!-- Include the following line to use Tailwind CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.16/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Berkeley+Mono&display=swap">
+
+    <script src="https://unpkg.com/htmx.org"></script>
+
+</head>
+<body class="bg-purple-100">
+<div  class="flex justify-center container">
+
+    <div class="bg-white p-8 rounded shadow-md w-96">
+
+        <h2 class="text-2xl font-semibold mb-6 text-center">Potje schaken?</h2>
+
+        <form hx-post="/chess-games/start" hx-target="#gameId" class="flex flex-col items-center">
+            <div class="mb-4">
+                <label for="whitePlayer" class="block text-gray-700 text-sm font-bold mb-2">Wie gaat er met wit spelen:</label>
+                <input type="text" id="whitePlayer" name="whitePlayer" class="w-full border border-gray-300 p-2 rounded-md" placeholder="Naam van de speler">
+            </div>
+            <div class="mb-6">
+                <label for="blackPlayer" class="block text-gray-700 text-sm font-bold mb-2">Wie gaat er met zwart spelen:</label>
+                <input type="text" id="blackPlayer" name="blackPlayer" class="w-full border border-gray-300 p-2 rounded-md" placeholder="Naam van de speler">
+            </div>
+            <div class="flex justify-center">
+                <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                    Start!
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <div id="gameId" class="text-center mt-4"></div>
+
+        <div class="grid grid-cols-9">
+            <div class="w-16 h-16 flex items-center justify-center text-2xl">
+                <div>&nbsp</div>
+            </div>
+            <div class="w-16 h-16 flex items-center justify-center text-2xl">
+                <div>A</div>
+            </div>
+            <div class="w-16 h-16 flex items-center justify-center text-2xl">
+                <div>B</div>
+            </div>
+            <div class="w-16 h-16 flex items-center justify-center text-2xl">
+                <div>C</div>
+            </div>
+            <div class="w-16 h-16 flex items-center justify-center text-2xl">
+                <div>D</div>
+            </div>
+
+            <div class="w-16 h-16 flex items-center justify-center text-2xl">
+                <div>E</div>
+            </div>
+            <div class="w-16 h-16 flex items-center justify-center text-2xl">
+                <div>F</div>
+            </div>
+
+            <div class="w-16 h-16 flex items-center justify-center text-2xl">
+                <div>G</div>
+            </div>
+            <div class="w-16 h-16 flex items-center justify-center text-2xl">
+                <div>H</div>
+            </div>
+
+            <div class="w-16 h-16 flex items-center justify-center text-2xl">
+                <div>1</div>
+            </div>
+            <div class="w-16 h-16 flex items-center justify-center bg-purple-600 text-4xl">♖</div>
+            <div class="w-16 h-16 flex items-center justify-center bg-purple-300 text-4xl">♘</div>
+            <div class="w-16 h-16 flex items-center justify-center bg-purple-600 text-4xl">♗</div>
+            <div class="w-16 h-16 flex items-center justify-center bg-purple-300 text-4xl">♔</div>
+            <div class="w-16 h-16 flex items-center justify-center bg-purple-600 text-4xl">♕</div>
+            <div class="w-16 h-16 flex items-center justify-center bg-purple-300 text-4xl">♗</div>
+            <div class="w-16 h-16 flex items-center justify-center bg-purple-600 text-4xl">♘</div>
+            <div class="w-16 h-16 flex items-center justify-center bg-purple-300 text-4xl">♖</div>
+
+            <div class="w-16 h-16 flex items-center justify-center text-2xl">
+                <div>2</div>
+            </div>
+            <div class="w-16 h-16 flex items-center justify-center bg-purple-300 text-4xl">♙</div>
+            <div class="w-16 h-16 flex items-center justify-center bg-purple-600 text-4xl">♙</div>
+            <div class="w-16 h-16 flex items-center justify-center bg-purple-300 text-4xl">♙</div>
+            <div class="w-16 h-16 flex items-center justify-center bg-purple-600 text-4xl">♙</div>
+            <div class="w-16 h-16 flex items-center justify-center bg-purple-300 text-4xl">♙</div>
+            <div class="w-16 h-16 flex items-center justify-center bg-purple-600 text-4xl">♙</div>
+            <div class="w-16 h-16 flex items-center justify-center bg-purple-300 text-4xl">♙</div>
+            <div class="w-16 h-16 flex items-center justify-center bg-purple-600 text-4xl">♙</div>
+
+            <div class="w-16 h-16 flex items-center justify-center text-2xl">
+                <div>3</div>
+            </div>
+            <div class="w-16 h-16 flex items-center justify-center bg-purple-600"></div>
+            <div class="w-16 h-16 flex items-center justify-center bg-purple-300"></div>
+            <div class="w-16 h-16 flex items-center justify-center bg-purple-600"></div>
+            <div class="w-16 h-16 flex items-center justify-center bg-purple-300"></div>
+            <div class="w-16 h-16 flex items-center justify-center bg-purple-600"></div>
+            <div class="w-16 h-16 flex items-center justify-center bg-purple-300"></div>
+            <div class="w-16 h-16 flex items-center justify-center bg-purple-600"></div>
+            <div class="w-16 h-16 flex items-center justify-center bg-purple-300"></div>
+
+            <div class="w-16 h-16 flex items-center justify-center text-2xl">
+                <div>4</div>
+            </div>
+            <div class="w-16 h-16 flex items-center justify-center bg-purple-300"></div>
+            <div class="w-16 h-16 flex items-center justify-center bg-purple-600"></div>
+            <div class="w-16 h-16 flex items-center justify-center bg-purple-300"></div>
+            <div class="w-16 h-16 flex items-center justify-center bg-purple-600"></div>
+            <div class="w-16 h-16 flex items-center justify-center bg-purple-300"></div>
+            <div class="w-16 h-16 flex items-center justify-center bg-purple-600"></div>
+            <div class="w-16 h-16 flex items-center justify-center bg-purple-300"></div>
+            <div class="w-16 h-16 flex items-center justify-center bg-purple-600"></div>
+
+            <div class="w-16 h-16 flex items-center justify-center text-2xl">
+                <div>5</div>
+            </div>
+            <div class="w-16 h-16 flex items-center justify-center bg-purple-600"></div>
+            <div class="w-16 h-16 flex items-center justify-center bg-purple-300"></div>
+            <div class="w-16 h-16 flex items-center justify-center bg-purple-600"></div>
+            <div class="w-16 h-16 flex items-center justify-center bg-purple-300"></div>
+            <div class="w-16 h-16 flex items-center justify-center bg-purple-600"></div>
+            <div class="w-16 h-16 flex items-center justify-center bg-purple-300"></div>
+            <div class="w-16 h-16 flex items-center justify-center bg-purple-600"></div>
+            <div class="w-16 h-16 flex items-center justify-center bg-purple-300"></div>
+
+            <div class="w-16 h-16 flex items-center justify-center text-2xl">
+                <div>6</div>
+            </div>
+            <div class="w-16 h-16 flex items-center justify-center bg-purple-300"></div>
+            <div class="w-16 h-16 flex items-center justify-center bg-purple-600"></div>
+            <div class="w-16 h-16 flex items-center justify-center bg-purple-300"></div>
+            <div class="w-16 h-16 flex items-center justify-center bg-purple-600"></div>
+            <div class="w-16 h-16 flex items-center justify-center bg-purple-300"></div>
+            <div class="w-16 h-16 flex items-center justify-center bg-purple-600"></div>
+            <div class="w-16 h-16 flex items-center justify-center bg-purple-300"></div>
+            <div class="w-16 h-16 flex items-center justify-center bg-purple-600"></div>
+
+            <div class="w-16 h-16 flex items-center justify-center text-2xl">
+                <div>7</div>
+            </div>
+
+            <div class="w-16 h-16 flex items-center justify-center bg-purple-600 text-4xl text-white">♙</div>
+            <div class="w-16 h-16 flex items-center justify-center bg-purple-300 text-4xl text-white">♙</div>
+            <div class="w-16 h-16 flex items-center justify-center bg-purple-600 text-4xl text-white">♙</div>
+            <div class="w-16 h-16 flex items-center justify-center bg-purple-300 text-4xl text-white">♙</div>
+            <div class="w-16 h-16 flex items-center justify-center bg-purple-600 text-4xl text-white">♙</div>
+            <div class="w-16 h-16 flex items-center justify-center bg-purple-300 text-4xl text-white">♙</div>
+            <div class="w-16 h-16 flex items-center justify-center bg-purple-600 text-4xl text-white">♙</div>
+            <div class="w-16 h-16 flex items-center justify-center bg-purple-300 text-4xl text-white">♙</div>
+
+            <div class="w-16 h-16 flex items-center justify-center text-2xl">
+                <div>8</div>
+            </div>
+            <div class="w-16 h-16 flex items-center justify-center bg-purple-300 text-4xl text-white">♖</div>
+            <div class="w-16 h-16 flex items-center justify-center bg-purple-600 text-4xl text-white">♘</div>
+            <div class="w-16 h-16 flex items-center justify-center bg-purple-300 text-4xl text-white">♗</div>
+            <div class="w-16 h-16 flex items-center justify-center bg-purple-600 text-4xl text-white">♔</div>
+            <div class="w-16 h-16 flex items-center justify-center bg-purple-300 text-4xl text-white">♕</div>
+            <div class="w-16 h-16 flex items-center justify-center bg-purple-600 text-4xl text-white" >♗</div>
+            <div class="w-16 h-16 flex items-center justify-center bg-purple-300 text-4xl text-white">♘</div>
+            <div class="w-16 h-16 flex items-center justify-center bg-purple-600 text-4xl text-white">♖</div>
+
+        </div>
+    </div>
+
+    <div class="font-berkeley-mono">
+        Copy code
+        <style>
+            /* Style the table and cells */
+            .font-berkeley-mono {
+                font-family: 'Berkeley Mono', monospace;
+            }
+
+            .min-w-full {
+                min-width: 100%;
+            }
+
+            .border {
+                border-width: 1px;
+                border-collapse: collapse;
+            }
+
+            .border-gray-300 {
+                border-color: #e5e7eb;
+            }
+
+            .border-b {
+                border-bottom: 1px solid #e5e7eb;
+            }
+        </style>
+        <table class="min-w-full border border-gray-300">
+            <thead>
+            <tr>
+                <th class="border-b">Date</th>
+                <th class="border-b">Message</th>
+            </tr>
+            </thead>
+            <tbody>
+            <!-- Log entries go here -->
+            <tr>
+                <td class="border-b">2023-11-21</td>
+                <td class="border-b">Log message goes here</td>
+            </tr>
+            <!-- Add more rows as needed -->
+            </tbody>
+        </table>
+    </div>
+
+</body>
+
+</html>

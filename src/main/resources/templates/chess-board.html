@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Siems schaakspel</title>
+    <!-- Include the following line to use Tailwind CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.16/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Berkeley+Mono&display=swap">
+
+    <script src="https://unpkg.com/htmx.org"></script>
+
+
+    <script>
+
+        document.addEventListener('htmx:afterRequest', function (event) {
+            const targetElement = event.detail;
+
+            console.log('After request', event.detail);
+            console.log(targetElement.pathInfo.requestPath === '/api/chess-games/start');
+
+            if (targetElement) {
+                if (targetElement.pathInfo.requestPath === '/api/chess-games/start') {
+                    console.log('Lets connect to updates');
+                    getUpdatesThroughServerSideEvent();
+                }
+            }
+        });
+
+        function getUpdatesThroughServerSideEvent() {
+            const eventSourceMoves = new EventSource(`/api/chess-games/updates/move`);
+            eventSourceMoves.onmessage = function (event) {
+
+                console.log('Received SSE event:', event.data);
+                const chessboardContainer = document.getElementById('chessboard');
+                chessboardContainer.innerHTML = event.data;
+            };
+            eventSourceMoves.onerror = function (error) {
+                console.error('SSE Error when retrieving move:', error);
+            };
+
+            const eventSourceLogs = new EventSource(`/api/chess-games/updates/log`);
+            eventSourceLogs.onmessage = function (event) {
+
+                console.log('Received SSE event:', event.data);
+                const logContainer = document.getElementById('log');
+                logContainer.innerHTML = event.data;
+            };
+            eventSourceLogs.onerror = function (error) {
+                console.error('SSE Error when retrieving log:', error);
+            };
+        }
+    </script>
+</head>
+
+<body class="bg-purple-100">
+<div  class="flex justify-center container">
+
+    <div class="bg-white p-8 rounded shadow-md w-96">
+
+        <h2 class="text-2xl font-semibold mb-6 text-center">Potje schaken?</h2>
+
+        <form hx-post="/api/chess-games/start" hx-target="#gameId" class="flex flex-col items-center">
+            <div class="mb-4">
+                <label for="whitePlayer" class="block text-gray-700 text-sm font-bold mb-2">Wie gaat er met wit spelen:</label>
+                <input type="text"
+                       id="whitePlayer"
+                       name="whitePlayer"
+                       class="w-full border border-gray-300 p-2 rounded-md"
+                       placeholder="Naam van de speler">
+            </div>
+            <div class="mb-6">
+                <label for="blackPlayer" class="block text-gray-700 text-sm font-bold mb-2">Wie gaat er met zwart spelen:</label>
+                <input type="text"
+                       id="blackPlayer"
+                       name="blackPlayer"
+                       class="w-full border border-gray-300 p-2 rounded-md"
+                       placeholder="Naam van de speler">
+            </div>
+            <div class="flex justify-center">
+                <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                    Start!
+                </button>
+            </div>
+        </form>
+    </div>
+
+
+
+    <div class="bg-white p-8 rounded shadow-md w-96">
+        <h2 class="text-2xl font-semibold mb-6 text-center">Volgende zet?</h2>
+        <form hx-post="/api/chess-games/move" hx-target="#gameId" class="flex flex-col items-center">
+            <div class="mb-2">
+                <label for="from" class="block text-gray-700 text-sm font-bold mb-2">Van</label>
+                <input type="text"
+                       id="from"
+                       name="from"
+                       class="w-full border border-gray-300 p-2 rounded-md"
+                       placeholder="voorbeeld D2">
+            </div>
+
+            <div class="mb-2">
+                <label for="to" class="block text-gray-700 text-sm font-bold mb-2">Naar</label>
+                <input type="text"
+                       id="to"
+                       name="to"
+                       class="w-full border border-gray-300 p-2 rounded-md"
+                       placeholder="voorbeeld D4">
+            </div>
+            <div class="flex justify-center">
+                <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                    Move
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <div id="gameId" class="text-center mt-4"></div>
+
+    <div id="chessboard">
+        <div class="grid grid-cols-9">
+            <div class="w-16 h-16 flex items-center justify-center text-2xl">
+                <div>&nbsp</div>
+            </div>
+            <div class="w-16 h-16 flex items-center justify-center text-2xl">
+                <div>A</div>
+            </div>
+            <div class="w-16 h-16 flex items-center justify-center text-2xl">
+                <div>B</div>
+            </div>
+            <div class="w-16 h-16 flex items-center justify-center text-2xl">
+                <div>C</div>
+            </div>
+            <div class="w-16 h-16 flex items-center justify-center text-2xl">
+                <div>D</div>
+            </div>
+
+            <div class="w-16 h-16 flex items-center justify-center text-2xl">
+                <div>E</div>
+            </div>
+            <div class="w-16 h-16 flex items-center justify-center text-2xl">
+                <div>F</div>
+            </div>
+
+            <div class="w-16 h-16 flex items-center justify-center text-2xl">
+                <div>G</div>
+            </div>
+            <div class="w-16 h-16 flex items-center justify-center text-2xl">
+                <div>H</div>
+            </div>
+
+            <th:block th:each="square : ${chessBoard.squares}">
+
+                <div th:if="${square.position.column.index == 0}" class="w-16 h-16 flex items-center justify-center text-2xl">
+                    <div th:text="${square.position.row.index + 1}"></div>
+                </div>
+
+                <div class ="w-16
+                             h-16
+                             flex
+                             items-center
+                             justify-center
+                             text-4xl"
+                     th:classappend="${(square.position.row.index + square.position.column.index) % 2 == 0 } ? 'bg-purple-600' : 'bg-purple-300'">
+                    <div th:text="${square.piece?.type?.representation}" th:classappend="${square.piece?.color?.toString() == 'WHITE'} ? 'text-white' "></div>
+                </div>
+            </th:block>
+
+        </div>
+    </div>
+
+</div>
+<br/>
+<div id="log">
+
+</div>
+</body>
+</html>

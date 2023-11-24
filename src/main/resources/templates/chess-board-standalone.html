@@ -1,0 +1,49 @@
+<div class="grid grid-cols-9">
+    <div class="w-16 h-16 flex items-center justify-center text-2xl">
+        <div>&nbsp</div>
+    </div>
+    <div class="w-16 h-16 flex items-center justify-center text-2xl">
+        <div>A</div>
+    </div>
+    <div class="w-16 h-16 flex items-center justify-center text-2xl">
+        <div>B</div>
+    </div>
+    <div class="w-16 h-16 flex items-center justify-center text-2xl">
+        <div>C</div>
+    </div>
+    <div class="w-16 h-16 flex items-center justify-center text-2xl">
+        <div>D</div>
+    </div>
+
+    <div class="w-16 h-16 flex items-center justify-center text-2xl">
+        <div>E</div>
+    </div>
+    <div class="w-16 h-16 flex items-center justify-center text-2xl">
+        <div>F</div>
+    </div>
+
+    <div class="w-16 h-16 flex items-center justify-center text-2xl">
+        <div>G</div>
+    </div>
+    <div class="w-16 h-16 flex items-center justify-center text-2xl">
+        <div>H</div>
+    </div>
+
+    <th:block th:each="square : ${squares}">
+
+        <div th:if="${square.position.column.index == 0}" class="w-16 h-16 flex items-center justify-center text-2xl">
+            <div th:text="${square.position.row.index + 1}"></div>
+        </div>
+
+        <div class ="w-16
+                         h-16
+                         flex
+                         items-center
+                         justify-center
+                         text-4xl"
+             th:classappend="${(square.position.row.index + square.position.column.index) % 2 == 0 } ? 'bg-purple-600' : 'bg-purple-300'">
+            <div th:text="${square.piece?.type?.representation}" th:classappend="${square.piece?.color?.toString() == 'WHITE'} ? 'text-white' "></div>
+        </div>
+    </th:block>
+
+</div>
