@@ -11,7 +11,7 @@ object GameStateDeterminer {
     fun check(color: PieceColor, board: Board): Boolean {
         return board.allSquaresWith(color.opposite())
             .flatMap { MoveDeterminer.possibleMoves(it, board) }
-            .any { it.chessPieceCaptured == ChessPiece(PieceType.KING, color) }
+            .any { it.chessPieceCapturedOn?.piece == ChessPiece(PieceType.KING, color) }
     }
 
     fun checkMate(color: PieceColor, board: Board): Boolean {

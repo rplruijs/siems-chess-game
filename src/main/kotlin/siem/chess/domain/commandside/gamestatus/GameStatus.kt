@@ -1,14 +1,15 @@
 package siem.chess.domain.commandside.gamestatus
 
+import siem.chess.domain.commandside.board.Position
+import siem.chess.domain.commandside.board.Square
 import siem.chess.domain.commandside.board.constants.ChessPiece
 import siem.chess.domain.commandside.board.constants.PieceColor
-import siem.chess.domain.commandside.board.Position
 
 data class Move (
     val piece: ChessPiece,
     val from: Position,
     val to: Position,
-    val chessPieceCaptured: ChessPiece? = null
+    val chessPieceCapturedOn: Square? = null
 )
 
 data class GameStatus (

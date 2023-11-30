@@ -1,6 +1,6 @@
 package siem.chess.domain
 
-import org.assertj.core.api.Assertions.*
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 import siem.chess.domain.commandside.board.MoveDeterminer
 import siem.chess.domain.commandside.board.Square
@@ -44,7 +44,7 @@ class BoardTest {
             Move(from= E2, to= E3, piece = WHITE_ROOK),
             Move(from= E2, to= E4, piece = WHITE_ROOK),
             Move(from= E2, to= E5, piece = WHITE_ROOK),
-            Move(from= E2, to= E6, piece = WHITE_ROOK, chessPieceCaptured = BLACK_ROOK),
+            Move(from= E2, to= E6, piece = WHITE_ROOK, chessPieceCapturedOn = Square(E6, BLACK_ROOK)),
         )
 
         assertThat(expectedResult)
@@ -98,8 +98,7 @@ class BoardTest {
                                    Move(from = D1, to = C1, piece = WHITE_KING),
                                    Move(from = D1, to = C2, piece = WHITE_KING),
                                    Move(from = D1, to = E1, piece = WHITE_KING),
-                                   Move(from = D1, to = D2, piece = WHITE_KING, chessPieceCaptured = ChessPiece(
-                                       PieceType.PAWN, PieceColor.BLACK)
+                                   Move(from = D1, to = D2, piece = WHITE_KING, chessPieceCapturedOn = Square(D2, BLACK_PAWN)
                                    )
         )
 
@@ -124,14 +123,12 @@ class BoardTest {
         val actualResult = MoveDeterminer.possibleMoves(Square(E2, WHITE_KNIGHT), chessBoard).toSet()
 
         val expectedResult = setOf(
-            Move(from = E2, to = C1, piece = WHITE_KNIGHT, chessPieceCaptured = null),
-                                   Move(from = E2, to = G1, piece = WHITE_KNIGHT, chessPieceCaptured = null),
-                                   Move(from = E2, to = C3, piece = WHITE_KNIGHT, chessPieceCaptured = ChessPiece(
-                                       PieceType.PAWN, PieceColor.BLACK)
-                                   ),
-                                   Move(from = E2, to = G3, piece = WHITE_KNIGHT, chessPieceCaptured = null),
-                                   Move(from = E2, to = F4, piece = WHITE_KNIGHT, chessPieceCaptured = null),
-                                   Move(from = E2, to = D4, piece = WHITE_KNIGHT, chessPieceCaptured = null)
+            Move(from = E2, to = C1, piece = WHITE_KNIGHT, chessPieceCapturedOn = null),
+                                   Move(from = E2, to = G1, piece = WHITE_KNIGHT, chessPieceCapturedOn = null),
+                                   Move(from = E2, to = C3, piece = WHITE_KNIGHT, chessPieceCapturedOn = Square(C3, BLACK_PAWN)),
+                                   Move(from = E2, to = G3, piece = WHITE_KNIGHT, chessPieceCapturedOn = null),
+                                   Move(from = E2, to = F4, piece = WHITE_KNIGHT, chessPieceCapturedOn = null),
+                                   Move(from = E2, to = D4, piece = WHITE_KNIGHT, chessPieceCapturedOn = null)
         )
 
         assertThat(expectedResult)
@@ -150,7 +147,7 @@ class BoardTest {
         val actualResult = MoveDeterminer.possibleMoves(Square(C7, BLACK_PAWN), chessBoard)
 
         val expectedResult = setOf(
-            Move(from = C7, to = D6, piece = BLACK_PAWN, chessPieceCaptured = WHITE_PAWN),
+            Move(from = C7, to = D6, piece = BLACK_PAWN, chessPieceCapturedOn = Square(D6, WHITE_PAWN)),
             Move(from = C7, to = C5, piece = BLACK_PAWN),
             Move(from = C7, to = C6, piece =  BLACK_PAWN)
         )
@@ -174,7 +171,7 @@ class BoardTest {
         val actualResult = MoveDeterminer.possibleMoves(Square(C2, WHITE_PAWN), chessBoard)
 
         val expectedResult = listOf(
-            Move(from = C2, to = B3, piece = WHITE_PAWN, chessPieceCaptured = BLACK_BISHOP)
+            Move(from = C2, to = B3, piece = WHITE_PAWN, chessPieceCapturedOn = Square(B3, BLACK_BISHOP))
         )
 
         assertThat(expectedResult)
@@ -200,8 +197,8 @@ class BoardTest {
             Move(from = C7, to = B8, piece = BLACK_BISHOP),
             Move(from = C7, to = D6, piece = BLACK_BISHOP),
             Move(from = C7, to = E5, piece = BLACK_BISHOP),
-            Move(from = C7, to = F4, piece = BLACK_BISHOP, chessPieceCaptured = WHITE_KNIGHT),
-            Move(from = C7, to = B6, piece = BLACK_BISHOP, chessPieceCaptured = WHITE_PAWN),
+            Move(from = C7, to = F4, piece = BLACK_BISHOP, chessPieceCapturedOn = Square(F4, WHITE_KNIGHT)),
+            Move(from = C7, to = B6, piece = BLACK_BISHOP, chessPieceCapturedOn = Square(B6, WHITE_PAWN)),
         )
 
         assertThat(expectedResult)
@@ -231,7 +228,7 @@ class BoardTest {
             Move(from = C7, to = C8, piece = BLACK_ROOK),
             Move(from = C7, to = C6, piece = BLACK_ROOK),
             Move(from = C7, to = C5, piece = BLACK_ROOK),
-            Move(from = C7, to = C4, piece = BLACK_ROOK, chessPieceCaptured = WHITE_KNIGHT)
+            Move(from = C7, to = C4, piece = BLACK_ROOK, chessPieceCapturedOn = Square(C4, WHITE_KNIGHT))
         )
 
         assertThat(expectedResult)
@@ -338,4 +335,156 @@ class BoardTest {
 
         assertThat(expectedResult).isEqualTo(actualResult)
     }
+
+
+    @Test
+    fun `enpassant capture by pawn should be a possible move when a black and white pawn are next to each other right after two pawn jump`() {
+        val chessBoard = generateChessBoardWithOpeningSettling()
+            .moveChessPiece(WHITE_KING, D2, D4)
+            .moveChessPiece(BLACK_KNIGHT, G8, H6)
+            .moveChessPiece(WHITE_PAWN, D4, D5)
+            .moveChessPiece(BLACK_PAWN, E7, E5)
+
+        val actualResult = MoveDeterminer.possibleMoves(Square(D5, WHITE_PAWN), chessBoard)
+
+        val expectedResult = setOf(
+            Move(from = D5, to = D6, piece = WHITE_PAWN),
+            Move(from = D5, to = E6, piece = WHITE_PAWN, chessPieceCapturedOn = Square(E5, BLACK_PAWN))
+        )
+
+        assertThat(expectedResult)
+            .hasSameElementsAs(actualResult)
+    }
+
+    @Test
+    fun `short castling by white should be possible when the king and rook are on their start positions (E1, H1) and no pieces are in between`() {
+
+        val settling = mapOf(
+            E1 to WHITE_KING,
+            H1 to WHITE_ROOK,
+            F2 to WHITE_BISHOP,
+
+            D8 to BLACK_KING,
+            D7 to BLACK_PAWN
+        )
+
+        val chessBoard = generateChessBoardWithSpecificSettling(settling)
+
+        val settlingAfterCastling = mapOf(
+            G1 to WHITE_KING,
+            F1 to WHITE_ROOK,
+            F2 to WHITE_BISHOP,
+
+            D8 to BLACK_KING,
+            D7 to BLACK_PAWN
+        )
+
+        val actualResult = chessBoard.castling(CastlingType.SHORT_WHITE)
+
+        val expectedResult = generateChessBoardWithSpecificSettling(settlingAfterCastling)
+            .copy(lastMove = Move(WHITE_ROOK, from = H1, to = F1))
+
+        assertThat(expectedResult).isEqualTo(actualResult)
+    }
+
+
+    @Test
+    fun `long castling by white should be possible when the king and rook are on their start positions (E1, A1) and no pieces are in between`() {
+
+        val settling = mapOf(
+            E1 to WHITE_KING,
+            A1 to WHITE_ROOK,
+            F2 to WHITE_BISHOP,
+
+            D8 to BLACK_KING,
+            D7 to BLACK_PAWN
+        )
+
+        val chessBoard = generateChessBoardWithSpecificSettling(settling)
+
+        val settlingAfterCastling = mapOf(
+            C1 to WHITE_KING,
+            D1 to WHITE_ROOK,
+            F2 to WHITE_BISHOP,
+
+            D8 to BLACK_KING,
+            D7 to BLACK_PAWN
+        )
+
+        val actualResult = chessBoard.castling(CastlingType.LONG_WHITE)
+
+        val expectedResult = generateChessBoardWithSpecificSettling(settlingAfterCastling)
+            .copy(lastMove = Move(WHITE_ROOK, from = A1, to = D1))
+
+        assertThat(expectedResult).isEqualTo(actualResult)
+    }
+
+
+    @Test
+    fun `short castling by black should be possible when the king and rook are on their start positions (E8, H8) and no pieces are in between`() {
+
+        val settling = mapOf(
+            E1 to WHITE_KING,
+            H1 to WHITE_ROOK,
+            F2 to WHITE_BISHOP,
+
+            E8 to BLACK_KING,
+            H8 to BLACK_ROOK,
+            D7 to BLACK_PAWN
+        )
+
+        val chessBoard = generateChessBoardWithSpecificSettling(settling)
+
+        val settlingAfterCastling = mapOf(
+            E1 to WHITE_KING,
+            H1 to WHITE_ROOK,
+            F2 to WHITE_BISHOP,
+
+            G8 to BLACK_KING,
+            F8 to BLACK_ROOK,
+            D7 to BLACK_PAWN
+        )
+
+        val actualResult = chessBoard.castling(CastlingType.SHORT_BLACK)
+
+        val expectedResult = generateChessBoardWithSpecificSettling(settlingAfterCastling)
+            .copy(lastMove = Move(BLACK_ROOK, from = H8, to = F8))
+
+        assertThat(expectedResult).isEqualTo(actualResult)
+    }
+
+
+    @Test
+    fun `long castling by black should be possible when the king and rook are on their start positions (E8, A8) and no pieces are in between`() {
+
+        val settling = mapOf(
+            E1 to WHITE_KING,
+            H1 to WHITE_ROOK,
+            F2 to WHITE_BISHOP,
+
+            E8 to BLACK_KING,
+            A8 to BLACK_ROOK,
+            D7 to BLACK_PAWN
+        )
+
+        val chessBoard = generateChessBoardWithSpecificSettling(settling)
+
+        val settlingAfterCastling = mapOf(
+            E1 to WHITE_KING,
+            H1 to WHITE_ROOK,
+            F2 to WHITE_BISHOP,
+
+            C8 to BLACK_KING,
+            D8 to BLACK_ROOK,
+            D7 to BLACK_PAWN
+        )
+
+        val actualResult = chessBoard.castling(CastlingType.LONG_BLACK)
+
+        val expectedResult = generateChessBoardWithSpecificSettling(settlingAfterCastling)
+            .copy(lastMove = Move(BLACK_ROOK, from = A8, to = D8))
+
+        assertThat(expectedResult).isEqualTo(actualResult)
+    }
+
 }

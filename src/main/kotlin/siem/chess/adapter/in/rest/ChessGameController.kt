@@ -8,29 +8,25 @@ import org.axonframework.messaging.responsetypes.ResponseTypes
 import org.axonframework.queryhandling.QueryGateway
 import org.springframework.http.codec.ServerSentEvent
 import org.springframework.stereotype.Controller
-
 import org.springframework.web.bind.annotation.*
-import org.thymeleaf.TemplateEngine
-import org.thymeleaf.context.Context
 import reactor.core.publisher.Flux
-
 import siem.chess.adapter.`in`.rest.exceptions.InvalidChessMoveException
-
-import siem.chess.domain.*
+import siem.chess.domain.ChessGameLogInfoQuery
+import siem.chess.domain.ChessMoveQuery
+import siem.chess.domain.MoveChessPieceCommand
+import siem.chess.domain.StartGameCommand
 import siem.chess.domain.commandside.board.Position
 import siem.chess.domain.queryside.ChessGame
 import siem.chess.domain.queryside.ChessGameLog
 import siem.chess.domain.queryside.ChessGameMove
-import siem.chess.domain.queryside.LogMessage
-
 import java.time.LocalDateTime
-import java.util.UUID
+import java.util.*
 import java.util.concurrent.CompletableFuture
 
 @Controller
 @RequestMapping("/api/chess-games")
 @ResponseBody
-class ChessGameController(val commandGateway: CommandGateway, val queryGateway: QueryGateway, val engine: TemplateEngine) {
+class ChessGameController(val commandGateway: CommandGateway, val queryGateway: QueryGateway, val htmlSnippetComposer: HtmlSnippetComposer) {
 
     @PostMapping("/start")
     fun start(@RequestParam whitePlayer: String, @RequestParam blackPlayer: String, response: HttpServletResponse): String {
@@ -48,14 +44,14 @@ class ChessGameController(val commandGateway: CommandGateway, val queryGateway: 
     @PostMapping("/move")
     fun move(@RequestParam from: String, @RequestParam to: String, request: HttpServletRequest) {
 
-        val from: Position = parseChessPosition(from) ?: throw InvalidChessMoveException("from position $from is invalid")
-        val to: Position = parseChessPosition(to)   ?: throw InvalidChessMoveException("to position $to is invalid")
+        val fromPosition: Position = parseChessPosition(from) ?: throw InvalidChessMoveException("from position $from is invalid")
+        val toPosition: Position = parseChessPosition(to)   ?: throw InvalidChessMoveException("to position $to is invalid")
 
         commandGateway.send<MoveChessPieceCommand>(
             MoveChessPieceCommand(gameId = extractGameIdFromCookie(request),
                 dateTime = LocalDateTime.now(),
-                from = from,
-                to = to)
+                from = fromPosition,
+                to = toPosition)
         )
     }
 
@@ -68,7 +64,7 @@ class ChessGameController(val commandGateway: CommandGateway, val queryGateway: 
 
         return query.initialResult()
             .concatWith( query.updates())
-                .map { ServerSentEvent.builder(it.settling).build() }
+                .map { ServerSentEvent.builder(htmlSnippetComposer.toHtmlChessBoard(it.settling)).build() }
 
     }
 
@@ -81,28 +77,22 @@ class ChessGameController(val commandGateway: CommandGateway, val queryGateway: 
 
         return query.initialResult()
             .concatWith( query.updates())
-            .map { ServerSentEvent.builder(toHtmlChessLogTable(it.entries)).build() }
+            .map { ServerSentEvent.builder(htmlSnippetComposer.toHtmlChessLogTable(it.entries)).build() }
     }
 
-    private fun toHtmlChessLogTable(log: List<LogMessage>): HtmlSnippet {
-        val context = Context()
-        context.setVariable("log", log)
-        return engine.process("chess-game-log", context).replace(Regex("[\\r\\n]"), "")
-    }
 
     @GetMapping
     fun chessGames(): CompletableFuture<List<ChessGame>> {
-        return queryGateway.query("allChessGames", "allChessGames", ResponseTypes.multipleInstancesOf(ChessGame::class.java));
+        return queryGateway.query("allChessGames", "allChessGames", ResponseTypes.multipleInstancesOf(ChessGame::class.java))
     }
 
     private fun addGameIdAsCookie(gameId: String, response: HttpServletResponse) {
         val cookie = Cookie("gameId", gameId)
-        cookie.maxAge = 3600 // Set the cookie's max age in seconds
-        cookie.secure = true // Set whether the cookie should only be sent over secure connections
-        cookie.isHttpOnly = true // Set whether the cookie should be accessible only through HTTP requests
-        cookie.path = "/" // Set the cookie's path
+        cookie.maxAge = 3600
+        cookie.secure = true
+        cookie.isHttpOnly = true
+        cookie.path = "/"
 
-        // Add the cookie to the HTTP response
         response.addCookie(cookie)
     }
 

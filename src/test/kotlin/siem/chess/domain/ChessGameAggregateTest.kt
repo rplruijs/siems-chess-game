@@ -5,9 +5,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import siem.chess.domain.commandside.ChessGameAggregate
 import siem.chess.domain.commandside.board.boardTextualOpeningSettling
-import siem.chess.domain.commandside.board.constants.D2
-import siem.chess.domain.commandside.board.constants.D4
-import siem.chess.domain.commandside.board.constants.WHITE_PAWN
+import siem.chess.domain.commandside.board.constants.*
 import java.time.LocalDateTime
 
 class ChessGameAggregateTest {
@@ -37,9 +35,36 @@ class ChessGameAggregateTest {
 
 
     @Test
-    fun `the famous d2-d4 opening should apply in the correct event` () {
-
+    fun `castling short by white should be result in correct event when state of the board is castling proof`() {
         val now = LocalDateTime.now()
+        val toBeBoardTextual = """
+            WHITE_ROOK,WHITE_KNIGHT,WHITE_BISHOP,WHITE_QUEEN,X,WHITE_ROOK,WHITE_KING,X,
+            WHITE_PAWN,WHITE_PAWN,WHITE_PAWN,WHITE_PAWN,X,WHITE_PAWN,WHITE_PAWN,WHITE_PAWN,
+            X,X,X,WHITE_BISHOP,X,X,X,WHITE_KNIGHT,
+            X,X,X,X,WHITE_PAWN,X,X,X,
+            X,X,X,X,BLACK_PAWN,X,X,X,
+            BLACK_PAWN,X,X,BLACK_PAWN,X,X,X,X,
+            X,BLACK_PAWN,BLACK_PAWN,X,X,BLACK_PAWN,BLACK_PAWN,BLACK_PAWN,
+            BLACK_ROOK,BLACK_KNIGHT,BLACK_BISHOP,BLACK_QUEEN,BLACK_KING,BLACK_BISHOP,BLACK_KNIGHT,BLACK_ROOK
+            
+        """.trimIndent().replace(Regex("[\\r\\n]"), "")
+
+
+        fixture.givenCommands(
+            startCommand,
+            MoveChessPieceCommand(gameId, now, E2, E4),
+            MoveChessPieceCommand(gameId, now, E7, E5),
+            MoveChessPieceCommand(gameId, now, F1, D3),
+            MoveChessPieceCommand(gameId, now, D7, D6),
+            MoveChessPieceCommand(gameId, now, G1, H3),
+            MoveChessPieceCommand(gameId, now, A7, A6),
+        ).`when`(CastlingCommand(gameId, now, CastlingType.SHORT_WHITE))
+            .expectEvents(CastlingAppliedEvent(gameId, now, CastlingType.SHORT_WHITE, toBeBoardTextual))
+    }
+
+
+    @Test
+    fun `the famous d2-d4 opening should apply in the correct event` () {
         val toBeBoardTextual = """
             WHITE_ROOK,WHITE_KNIGHT,WHITE_BISHOP,WHITE_KING,WHITE_QUEEN,WHITE_BISHOP,WHITE_KNIGHT,WHITE_ROOK,
             WHITE_PAWN,WHITE_PAWN,WHITE_PAWN,X,WHITE_PAWN,WHITE_PAWN,WHITE_PAWN,WHITE_PAWN,
@@ -52,8 +77,16 @@ class ChessGameAggregateTest {
             
         """.trimIndent().replace(Regex("[\\r\\n]"), "")
 
-        fixture.givenCommands(StartGameCommand("42", now, "Siem", "Remco"))
+        fixture.givenCommands(startCommand)
             .`when`(MoveChessPieceCommand("42", now, D2, D4))
             .expectEvents(ChessPieceMovedEvent("42", now, WHITE_PAWN, D2, D4, toBeBoardTextual))
     }
+
+    companion object {
+        val now = LocalDateTime.now()
+        val gameId = "42"
+        val startCommand = StartGameCommand(gameId, now, "Siem", "Remco")
+    }
+
+
 }

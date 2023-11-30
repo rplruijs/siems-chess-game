@@ -10,7 +10,7 @@ import org.axonframework.spring.stereotype.Aggregate
 import siem.chess.domain.*
 import siem.chess.domain.commandside.board.Board
 import siem.chess.domain.commandside.board.boardTextualOpeningSettling
-import siem.chess.domain.commandside.board.constants.PieceColor
+import siem.chess.domain.commandside.board.constants.*
 import siem.chess.domain.commandside.board.generateChessBoardWithOpeningSettling
 import siem.chess.domain.commandside.board.textualRepresentation
 import siem.chess.domain.commandside.exceptions.MoveNotPossibleException
@@ -28,6 +28,14 @@ class ChessGameAggregate() {
     private lateinit var onMove: Player
     private lateinit var board: Board
 
+    private var shortCastlingStillPossibleByWhite: Boolean = true
+    private var shortCastlingStillPossibleByBlack: Boolean = true
+    private var longCastlingStillPossibleByWhite: Boolean = true
+    private var longCastlingStillPossibleByBlack: Boolean = true
+
+    private var castlingDoneByWhite: Boolean =  false
+    private var castlingDoneByBlack: Boolean =  false
+
     private var winner: Player? = null
 
 
@@ -35,6 +43,30 @@ class ChessGameAggregate() {
     @CreationPolicy(AggregateCreationPolicy.CREATE_IF_MISSING)
     fun handle(command: StartGameCommand) {
         apply(GameStartedEvent(command.gameId, command.dateTime, command.whitePlayer, command.blackPlayer, boardTextualOpeningSettling()))
+    }
+
+    @CommandHandler
+    fun handle(command: CastlingCommand) {
+
+       if (winnerAlreadyDetermined()) { return }
+
+       if (isCastlingPossible(command.castlingType)) {
+           val toBeBoard = board.castling(command.castlingType)
+           apply (
+               CastlingAppliedEvent(command.gameId, command.dateTime, command.castlingType, textualRepresentation(toBeBoard.squares))
+           )
+       } else {
+           apply ( CastlingNotPossibleEvent(command.gameId,  command.castlingType) )
+       }
+    }
+
+    private fun isCastlingPossible(castlingType: CastlingType): Boolean {
+        return when(castlingType) {
+                    CastlingType.SHORT_BLACK -> shortCastlingStillPossibleByBlack
+                    CastlingType.SHORT_WHITE -> shortCastlingStillPossibleByWhite
+                    CastlingType.LONG_BLACK  -> longCastlingStillPossibleByBlack
+                    CastlingType.LONG_WHITE  -> longCastlingStillPossibleByWhite
+        }
     }
 
     @CommandHandler
@@ -58,11 +90,11 @@ class ChessGameAggregate() {
             )
                 .andThenApplyIf(
                     { toBeBoard.gameStatus?.check },
-                    { CheckEvent(gameId = command.gameId, dateTime = command.dateTime, check = onMove.pieceColor.opposite()) }
+                    { CheckEvent(gameId = command.gameId, dateTime = command.dateTime, check = onMove.pieceColor.opposite(), boardTextual = textualRepresentation(this.board.squares)) }
                 )
                 .andThenApplyIf(
                     {  toBeBoard.gameStatus?.checkMate },
-                    {  GameEndedByCheckMateEvent(gameId = gameId, dateTime = command.dateTime, winner = onMove.pieceColor) }
+                    {  GameEndedByCheckMateEvent(gameId = gameId, dateTime = command.dateTime, winner = onMove.pieceColor, boardTextual = textualRepresentation(this.board.squares)) }
                 )
         } catch (nsp: PieceNotFoundAtPositionException) {
             apply(
@@ -78,7 +110,7 @@ class ChessGameAggregate() {
                 MoveNotPossibleByWrongTargetEvent(
                 gameId = command.gameId,
                 dateTime = command.dateTime,
-                color = onMove.pieceColor,
+                chessPiece = mnp.from.piece!!,
                 from = command.from,
                 to = command.to)
             )
@@ -108,6 +140,37 @@ class ChessGameAggregate() {
         this.onMove = when(event.chessPiece.color) {
             PieceColor.WHITE -> blackPlayer
             PieceColor.BLACK -> whitePlayer
+        }
+        handleCastlingLogic(event)
+    }
+
+    private fun handleCastlingLogic(event: ChessPieceMovedEvent) {
+        when (event.chessPiece) {
+            WHITE_ROOK -> {
+                    when (event.from) {
+                        A1 -> this.longCastlingStillPossibleByWhite = false
+                        H1 -> this.shortCastlingStillPossibleByWhite = false
+                    }
+                }
+            BLACK_ROOK -> {
+                    when (event.from) {
+                        A8 -> this.longCastlingStillPossibleByBlack = false
+                        H8 -> this.shortCastlingStillPossibleByBlack = false
+                    }
+            }
+            BLACK_KING -> {
+                if (event.from == E8) {
+                    this.longCastlingStillPossibleByBlack = false
+                    this.shortCastlingStillPossibleByBlack
+                }
+            }
+            WHITE_KING -> {
+                if (event.from == E1) {
+                    this.longCastlingStillPossibleByWhite = false
+                    this.shortCastlingStillPossibleByWhite = false
+                }
+            }
+            else -> return
         }
     }
 

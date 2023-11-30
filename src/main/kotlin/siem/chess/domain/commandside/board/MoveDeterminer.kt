@@ -21,8 +21,16 @@ object MoveDeterminer {
         }
 
         fun movePawnPossibilities(color: PieceColor): List<Move> {
-            return pawnMovementTargetsToMoves(pawnMovementTargets(from.position, squares, color),  fromPosition, chessPiece, squares)
-                .plus(pawnCaptureTargetsToMoves(pawnCaptureTargets(from.position, squares, color),  fromPosition, chessPiece))
+            val captureTargets = pawnCaptureTargets(from.position, squares, color)
+
+            val movesSoFar = pawnMovementTargetsToMoves(pawnMovementTargets(from.position, squares, color),  fromPosition, chessPiece, squares)
+                .plus(pawnCaptureTargetsToMoves(captureTargets,  fromPosition, chessPiece))
+
+            return if (board.lastMove != null) {
+                movesSoFar.plus(enPassantCaptureTargetsToMove(captureTargets, fromPosition, chessPiece, lastMove = board.lastMove))
+            } else {
+                movesSoFar
+            }
         }
 
         fun moveKnightPossibilities(): List<Move> {
@@ -54,7 +62,7 @@ object MoveDeterminer {
                     from = from,
                     to = it.position,
                     piece = chessPiece,
-                    chessPieceCaptured = range.last.piece
+                    chessPieceCapturedOn = range.last
                 )
 
                 else -> null
@@ -67,7 +75,7 @@ object MoveDeterminer {
             val capture = it.piece != null
 
             when {
-                capture -> toMove(from = from, to = it.position, piece = chessPiece, chessPieceCaptured = it.piece)
+                capture -> toMove(from = from, to = it.position, piece = chessPiece, chessPieceCapturedOn = it)
                 else    -> toMove(from = from, to = it.position, piece = chessPiece)
             }
         }
@@ -87,19 +95,47 @@ object MoveDeterminer {
         }
     }
 
-    private fun pawnCaptureTargetsToMoves(possibleCaptures: List<Square>, from: Position, chessPiece: ChessPiece): List<Move> {
+    private fun pawnCaptureTargetsToMoves(
+        possibleCaptures: List<Square>,
+        from: Position,
+        chessPiece: ChessPiece): List<Move> {
         return possibleCaptures
             .filter {
                 it.containsPieceOfOppositeColor(chessPiece)
-                        ||
-                        enPassantCaptureIsPossible()
             }
-            .map { toMove(from = from, to = it.position, piece = chessPiece, chessPieceCaptured = it.piece) }
+            .map { toMove(from = from, to = it.position, piece = chessPiece, chessPieceCapturedOn = it) }
+    }
+    private fun enPassantCaptureTargetsToMove (
+        possibleCaptures: List<Square>,
+        from: Position,
+        chessPiece: ChessPiece,
+        lastMove: Move) : List<Move> {
+
+        val enPassantSquare = possibleCaptures.find { enPassantCaptureIsPossible(it, lastMove) }
+
+        return if (enPassantSquare != null) {
+            listOf(toMove(from = from, to = enPassantSquare.position, piece = chessPiece, chessPieceCapturedOn = Square(position = lastMove.to, piece = lastMove.piece)))
+        } else {
+            emptyList()
+        }
     }
 
-    //TODO
-    private fun enPassantCaptureIsPossible(): Boolean {
-        return false
+    private fun enPassantCaptureIsPossible(to: Square, lastMove: Move?): Boolean {
+        return if (lastMove == null) {
+            false
+        } else {
+            (to.isEmpty()
+                    && pawnMoveFromStartPositionDistanceTwo(lastMove)
+                    && lastMove.to.verticalDistance(to.position) == 1
+                    && lastMove.to.sameColumn(to.position))
+        }
+    }
+
+    private fun pawnMoveFromStartPositionDistanceTwo(move: Move): Boolean {
+        return when (move.piece.type) {
+            PieceType.PAWN -> move.from.isStartPositionPawn(move.piece.color) && move.from.verticalDistance(move.to) == 2
+            else           -> false
+        }
     }
 
     private fun rangeDeterminer(from: Position, to: Position, squares: List<Square>): List<Square> {
@@ -138,8 +174,8 @@ object MoveDeterminer {
         return Triple(min(indexFrom, toIndex), max(indexFrom, toIndex), shouldReverse)
     }
 
-    private fun toMove(from: Position, to: Position, piece: ChessPiece, chessPieceCaptured: ChessPiece? = null): Move {
-        return Move(from = from, to = to, piece = piece, chessPieceCaptured = chessPieceCaptured)
+    private fun toMove(from: Position, to: Position, piece: ChessPiece, chessPieceCapturedOn: Square? = null): Move {
+        return Move(from = from, to = to, piece = piece, chessPieceCapturedOn = chessPieceCapturedOn)
     }
 
     private fun allTargets(limit: Int = 8, from: Position, squares: List<Square>): List<Square> {
