@@ -28,7 +28,7 @@ data class Board(val squares: List<Square>,
     }
 
     fun pieceOfColorOnPosition(color: PieceColor, position: Position): Boolean {
-        return this.squares.find { it.position == position && it.piece?.color == color} != null
+        return this.squares.find { it.position == position && it.piece?.color == color } != null
     }
 
     private fun moveChessPiece(turn: PieceColor, from: Position, to: Position): Board {
@@ -49,21 +49,24 @@ data class Board(val squares: List<Square>,
         fun convert(iter: Square): Square {
             return when (iter.position) {
                 from -> iter.removeChessPiece()
-                to   -> iter.placeChessPiece(move.piece)
+                to -> iter.placeChessPiece(move.piece)
                 else -> iter
             }
         }
-        return Board(squares = this.squares.map { iter -> convert(iter) },
-                lastMove = Move(piece = chessPiece,
+        return Board(
+            squares = this.squares.map { iter -> convert(iter) },
+            lastMove = Move(
+                piece = chessPiece,
                 from = fromSquare.position,
                 to = toSquare.position,
-                chessPieceCapturedOn = toSquare)
+                chessPieceCapturedOn = toSquare
+            )
         )
     }
 
     fun resultOfMove(from: Position, to: Position): Board {
 
-        val chessPiece = getChessPiece(from)?: throw PieceNotFoundAtPositionException(from)
+        val chessPiece = getChessPiece(from) ?: throw PieceNotFoundAtPositionException(from)
 
         val toBeBoard = moveChessPiece(chessPiece, from, to)
         val check = GameStateDeterminer.check(chessPiece.color.opposite(), toBeBoard)
@@ -78,42 +81,26 @@ data class Board(val squares: List<Square>,
         fun move(chessPiece: ChessPiece, squares: List<Square>, from: Position, to: Position): Board {
 
             val fromSquare = getChessSquare(from)
-            val toSquare   = getChessSquare(to)
+            val toSquare = getChessSquare(to)
 
             val toBeSquares = squares.map {
-                when(it) {
+                when (it) {
                     fromSquare -> it.removeChessPiece()
-                    toSquare   -> it.placeChessPiece(chessPiece)
-                    else       -> it }
+                    toSquare -> it.placeChessPiece(chessPiece)
+                    else -> it
+                }
             }
             return Board(squares = toBeSquares, lastMove = Move(chessPiece, from, to))
         }
 
         if (correctPositionsForCastling(castlingType)) {
-
-            return when(castlingType) {
-                CastlingType.LONG_WHITE  -> {
-                    val intermediateBoard = move(WHITE_KING, this.squares,  E1, C1)
-                    move(WHITE_ROOK, intermediateBoard.squares, A1, D1)
-                }
-                CastlingType.SHORT_WHITE -> {
-                    val intermediateBoard = move(WHITE_KING, this.squares, E1, G1)
-                    move(WHITE_ROOK, intermediateBoard.squares, H1, F1)
-                }
-                CastlingType.LONG_BLACK  -> {
-                    val intermediateBoard = move(BLACK_KING, this.squares, E8, C8)
-                    move(BLACK_ROOK, intermediateBoard.squares, A8, D8)
-                }
-                CastlingType.SHORT_BLACK  -> {
-                    val intermediateBoard = move(BLACK_KING, this.squares, E8, G8)
-                    move(BLACK_ROOK, intermediateBoard.squares, H8, F8)
-                }
-            }
-
+            val intermediateBoard = move(castlingType.kingMove.piece, this.squares, castlingType.kingMove.from, castlingType.kingMove.to)
+            return move(castlingType.rookMove.piece, intermediateBoard.squares, castlingType.rookMove.from, castlingType.rookMove.to)
         } else {
             throw WrongSettlingForCastlingException(castlingType)
         }
     }
+
 
     private fun correctPositionsForCastling(castlingType: CastlingType): Boolean {
         return when(castlingType) {

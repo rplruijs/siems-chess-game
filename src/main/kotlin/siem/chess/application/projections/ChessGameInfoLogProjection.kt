@@ -4,18 +4,16 @@ import org.axonframework.eventhandling.EventHandler
 import org.axonframework.queryhandling.QueryHandler
 import org.axonframework.queryhandling.QueryUpdateEmitter
 import org.springframework.stereotype.Component
-import org.thymeleaf.TemplateEngine
 import siem.chess.application.repositories.ChessGameInfoLogRepository
 import siem.chess.domain.*
 import siem.chess.domain.commandside.board.constants.PieceColor
-import siem.chess.domain.queryside.LogMessageType
 import siem.chess.domain.queryside.ChessGameLog
 import siem.chess.domain.queryside.LogMessage
+import siem.chess.domain.queryside.LogMessageType
 
 @Component
 class ChessGameInfoLogProjection(val queryUpdateEmitter: QueryUpdateEmitter,
-                                 val chessGameInfoLogRepository: ChessGameInfoLogRepository,
-                                 val engine: TemplateEngine) {
+                                 val chessGameInfoLogRepository: ChessGameInfoLogRepository) {
 
     @EventHandler
     fun handle(event: GameStartedEvent) {
@@ -42,6 +40,10 @@ class ChessGameInfoLogProjection(val queryUpdateEmitter: QueryUpdateEmitter,
         handleLogMessage(toLogMessage(event))
     }
 
+    @EventHandler
+    fun handle(event: CastlingAppliedEvent) {
+        handleLogMessage(toLogMessage(event))
+    }
 
     @QueryHandler
     fun handle(chessGameLogInfoQuery: ChessGameLogInfoQuery): ChessGameLog {
@@ -84,15 +86,31 @@ class ChessGameInfoLogProjection(val queryUpdateEmitter: QueryUpdateEmitter,
                 }
             }
             is MoveNotPossibleByWrongTargetEvent -> {
-
-
                 val move = "${event.from} - ${event.to}"
                 LogMessage(event.gameId, event.dateTime, LogMessageType.WRONG_MOVE_BY_WHITE,  move)
+            }
+            is CastlingAppliedEvent -> {
+                LogMessage(event.gameId, event.dateTime, toLogMessageType(event.castlingType), toLogMessage(event.castlingType))
             }
 
             else                     -> throw IllegalStateException("Unsupported event")
         }
     }
 
-
+    private fun toLogMessageType(castlingType: CastlingType) : LogMessageType {
+        return when(castlingType) {
+            CastlingType.SHORT_WHITE -> LogMessageType.SHORT_CASTLING_WHITE
+            CastlingType.SHORT_BLACK -> LogMessageType.SHORT_CASTLING_BLACK
+            CastlingType.LONG_WHITE  -> LogMessageType.LONG_CASTLING_WHITE
+            CastlingType.LONG_BLACK  -> LogMessageType.LONG_CASTLING_WHITE
+        }
+    }
+    private fun toLogMessage(castlingType: CastlingType): String {
+        return when(castlingType) {
+            CastlingType.SHORT_WHITE -> "Short castling done by white"
+            CastlingType.SHORT_BLACK -> "Short castling done by black"
+            CastlingType.LONG_WHITE  -> "Long castling done by white"
+            CastlingType.LONG_BLACK  -> "Long castling done by black"
+        }
+    }
 }
