@@ -12,18 +12,28 @@ data class ChessGameLog(val gameId: String, val entries: List<LogMessage>)
 
 data class LogMessage(val gameId: String, val logTime: LocalDateTime, val logMessageType: LogMessageType, val message: String)
 
-enum class LogMessageType {
-    GAME_STARTED,
-    MOVE_BY_WHITE,
-    MOVE_BY_BLACK,
-    WRONG_MOVE_BY_BLACK,
-    WRONG_MOVE_BY_WHITE,
-    CHECK_BY_WHITE,
-    CHECK_BY_BLACK,
-    CHECK_MATE_BY_WHITE,
-    SHORT_CASTLING_WHITE,
-    SHORT_CASTLING_BLACK,
-    LONG_CASTLING_WHITE,
-    LONG_CASTLING_BLACK,
-    CHECK_MATE_BY_BLACK
+
+
+val BLACK = "text-black"
+val WHITE = "text-white"
+val RED = "text-red"
+
+enum class LogMessageType(color:String) {
+    GAME_STARTED(BLACK),
+    MOVE_BY_WHITE(WHITE),
+    MOVE_BY_BLACK(BLACK),
+    WRONG_MOVE_BY_BLACK(RED),
+    WRONG_MOVE_BY_WHITE(RED),
+    CHECK_BY_WHITE(WHITE),
+    CHECK_BY_BLACK(BLACK),
+    CHECK_MATE_BY_WHITE(WHITE),
+    SHORT_CASTLING_WHITE(WHITE),
+    SHORT_CASTLING_BLACK(BLACK),
+    LONG_CASTLING_WHITE(WHITE),
+    LONG_CASTLING_BLACK(BLACK),
+    WRONG_SHORT_CASTLING_WHITE(RED),
+    WRONG_SHORT_CASTLING_BLACK(RED),
+    WRONG_LONG_CASTLING_WHITE(RED),
+    WRONG_LONG_CASTLING_BLACK(RED),
+    CHECK_MATE_BY_BLACK(BLACK),
 }

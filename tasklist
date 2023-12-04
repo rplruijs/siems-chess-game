@@ -1,0 +1,6 @@
+- parse the user input when castling is asked. (Maybe two checkboxes (long and short))
+- Get rid of htmx when asynchronous events
+- UX. Better user experience
+- Make it possible to change a chesspiece when a pawn reaches the other end of the board
+
+

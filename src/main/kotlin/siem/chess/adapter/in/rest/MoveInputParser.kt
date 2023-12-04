@@ -47,3 +47,5 @@ fun parsePieceColor(color: String): PieceColor? {
         else   -> null
     }
 }
+
+val CASTLING_MOVES = setOf("castling long, castling short")

@@ -10,12 +10,7 @@
         <td class="border-b" th:text="${logEntry.logTime}"></td>
         <td class="border-b"
             th:text="${logEntry.message}"
-            th:class="
-                ( ${logEntry.logMessageType.toString() == 'MOVE_BY_WHITE'} ? 'text-white' : '' )
-              + ( ${logEntry.logMessageType.toString() == 'MOVE_BY_BLACK'} ? 'text-black' : '' )
-              + ( ${logEntry.logMessageType.toString() == 'WRONG_MOVE_BY_BLACK'} ? 'text-red' : '' )
-              + ( ${logEntry.logMessageType.toString() == 'WRONG_MOVE_BY_WHITE'} ? 'text-red' : '' )">
-
+            th:class="( ${logEntry.color})">
         </td>
     </tr>
     </tbody>

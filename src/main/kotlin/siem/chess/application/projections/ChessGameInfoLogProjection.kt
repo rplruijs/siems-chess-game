@@ -45,6 +45,11 @@ class ChessGameInfoLogProjection(val queryUpdateEmitter: QueryUpdateEmitter,
         handleLogMessage(toLogMessage(event))
     }
 
+    @EventHandler
+    fun handle(event: CastlingNotPossibleEvent) {
+        handleLogMessage(toLogMessage(event))
+    }
+
     @QueryHandler
     fun handle(chessGameLogInfoQuery: ChessGameLogInfoQuery): ChessGameLog {
         return chessGameInfoLogRepository.getChessGameLog(chessGameLogInfoQuery.gameId)
@@ -86,11 +91,19 @@ class ChessGameInfoLogProjection(val queryUpdateEmitter: QueryUpdateEmitter,
                 }
             }
             is MoveNotPossibleByWrongTargetEvent -> {
-                val move = "${event.from} - ${event.to}"
-                LogMessage(event.gameId, event.dateTime, LogMessageType.WRONG_MOVE_BY_WHITE,  move)
+
+                val logMessageType = when(event.chessPiece.color) {
+                    PieceColor.WHITE -> LogMessageType.WRONG_MOVE_BY_WHITE
+                    PieceColor.BLACK -> LogMessageType.WRONG_MOVE_BY_BLACK
+                }
+                val wrongMoveMessage = "Not possible to move ${event.chessPiece} from ${event.from} to ${event.to}"
+                LogMessage(event.gameId, event.dateTime, logMessageType,  wrongMoveMessage)
             }
             is CastlingAppliedEvent -> {
                 LogMessage(event.gameId, event.dateTime, toLogMessageType(event.castlingType), toLogMessage(event.castlingType))
+            }
+            is CastlingNotPossibleEvent -> {
+                LogMessage(event.gameId, event.dateTime, toLogMessageTypeWrong(event.castlingType), toLogMessageWrong(event.castlingType))
             }
 
             else                     -> throw IllegalStateException("Unsupported event")
@@ -102,7 +115,7 @@ class ChessGameInfoLogProjection(val queryUpdateEmitter: QueryUpdateEmitter,
             CastlingType.SHORT_WHITE -> LogMessageType.SHORT_CASTLING_WHITE
             CastlingType.SHORT_BLACK -> LogMessageType.SHORT_CASTLING_BLACK
             CastlingType.LONG_WHITE  -> LogMessageType.LONG_CASTLING_WHITE
-            CastlingType.LONG_BLACK  -> LogMessageType.LONG_CASTLING_WHITE
+            CastlingType.LONG_BLACK  -> LogMessageType.LONG_CASTLING_BLACK
         }
     }
     private fun toLogMessage(castlingType: CastlingType): String {
@@ -111,6 +124,23 @@ class ChessGameInfoLogProjection(val queryUpdateEmitter: QueryUpdateEmitter,
             CastlingType.SHORT_BLACK -> "Short castling done by black"
             CastlingType.LONG_WHITE  -> "Long castling done by white"
             CastlingType.LONG_BLACK  -> "Long castling done by black"
+        }
+    }
+
+    private fun toLogMessageTypeWrong(castlingType: CastlingType) : LogMessageType {
+        return when(castlingType) {
+            CastlingType.SHORT_WHITE -> LogMessageType.WRONG_SHORT_CASTLING_WHITE
+            CastlingType.SHORT_BLACK -> LogMessageType.WRONG_SHORT_CASTLING_BLACK
+            CastlingType.LONG_WHITE  -> LogMessageType.WRONG_LONG_CASTLING_WHITE
+            CastlingType.LONG_BLACK  -> LogMessageType.WRONG_LONG_CASTLING_BLACK
+        }
+    }
+    private fun toLogMessageWrong(castlingType: CastlingType): String {
+        return when(castlingType) {
+            CastlingType.SHORT_WHITE -> "Wrong short castling done by white"
+            CastlingType.SHORT_BLACK -> "Wrong short castling done by black"
+            CastlingType.LONG_WHITE  -> "Wrong long castling done by white"
+            CastlingType.LONG_BLACK  -> "Wring long castling done by black"
         }
     }
 }

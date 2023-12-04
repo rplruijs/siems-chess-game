@@ -4,7 +4,7 @@ import org.axonframework.commandhandling.CommandHandler
 import org.axonframework.eventsourcing.EventSourcingHandler
 import org.axonframework.modelling.command.AggregateCreationPolicy
 import org.axonframework.modelling.command.AggregateIdentifier
-import org.axonframework.modelling.command.AggregateLifecycle.*
+import org.axonframework.modelling.command.AggregateLifecycle.apply
 import org.axonframework.modelling.command.CreationPolicy
 import org.axonframework.spring.stereotype.Aggregate
 import siem.chess.domain.*
@@ -53,10 +53,18 @@ class ChessGameAggregate() {
        if (isCastlingPossible(command.castlingType)) {
            val toBeBoard = board.castling(command.castlingType)
            apply (
-               CastlingAppliedEvent(command.gameId, command.dateTime, command.castlingType, textualRepresentation(toBeBoard.squares))
+               CastlingAppliedEvent(gameId = command.gameId,
+                   dateTime = command.dateTime,
+                   pieceColor = this.onMove.pieceColor,
+                   castlingType = command.castlingType,
+                   boardTextual =  textualRepresentation(toBeBoard.squares))
            )
        } else {
-           apply ( CastlingNotPossibleEvent(command.gameId,  command.castlingType) )
+           apply ( CastlingNotPossibleEvent(
+                       gameId = command.gameId,
+                       dateTime = command.dateTime,
+                       pieceColor = this.onMove.pieceColor,
+                       castlingType = command.castlingType))
        }
     }
 
@@ -73,20 +81,22 @@ class ChessGameAggregate() {
     fun handle(command: MoveChessPieceCommand) {
 
         if (winnerAlreadyDetermined()) { return }
-        if (moveDoneByWrongPlayer(command)) { apply(MoveAttemptByWrongPlayerEvent(command.gameId, command.dateTime, onMove.pieceColor.opposite(), command.from, command.to)) }
-
+        if (moveDoneByWrongPlayer(command)) {
+            apply(MoveAttemptByWrongPlayerEvent(command.gameId, command.dateTime, onMove.pieceColor.opposite(), command.from, command.to))
+            return
+        }
         try {
             val toBeBoard = board.resultOfMove(command.from, command.to)
             val lastMove = toBeBoard.lastMove ?: return
             apply(
                 ChessPieceMovedEvent(
-                gameId = command.gameId,
-                command.dateTime,
-                chessPiece = lastMove.piece,
-                from = lastMove.from,
-                to = lastMove.to,
-                boardTextual = textualRepresentation(toBeBoard.squares)
-            )
+                    gameId = command.gameId,
+                    command.dateTime,
+                    chessPiece = lastMove.piece,
+                    from = lastMove.from,
+                    to = lastMove.to,
+                    boardTextual = textualRepresentation(toBeBoard.squares)
+                )
             )
                 .andThenApplyIf(
                     { toBeBoard.gameStatus?.check },
@@ -161,7 +171,7 @@ class ChessGameAggregate() {
             BLACK_KING -> {
                 if (event.from == E8) {
                     this.longCastlingStillPossibleByBlack = false
-                    this.shortCastlingStillPossibleByBlack
+                    this.shortCastlingStillPossibleByBlack = false
                 }
             }
             WHITE_KING -> {

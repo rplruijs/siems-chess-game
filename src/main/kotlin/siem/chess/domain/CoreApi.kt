@@ -28,7 +28,7 @@ enum class CastlingType(val kingMove: Move, val rookMove: Move){
  */
 data class GameStartedEvent(val gameId: String, val dateTime: LocalDateTime, val whitePlayer: String, val blackPlayer: String, val boardTextual: String)
 data class ChessPieceMovedEvent(val gameId: String, val dateTime: LocalDateTime, val chessPiece: ChessPiece, val from: Position, val to: Position, val boardTextual: String)
-data class CastlingAppliedEvent(val gameId: String, val dateTime: LocalDateTime, val castlingType: CastlingType, val boardTextual: String)
+data class CastlingAppliedEvent(val gameId: String, val dateTime: LocalDateTime, val pieceColor: PieceColor, val castlingType: CastlingType, val boardTextual: String)
 data class CheckEvent(val gameId: String, val dateTime: LocalDateTime, val check: PieceColor, val boardTextual: String)
 data class GameEndedByCheckMateEvent(val gameId: String, val dateTime: LocalDateTime, val winner: PieceColor, val boardTextual: String)
 
@@ -36,7 +36,7 @@ data class MoveAttemptByWrongPlayerEvent(val gameId: String, val dateTime: Local
 data class MoveNotPossibleByMissingChessPieceEvent(val gameId: String, val dateTime: LocalDateTime, val from: Position, val to: Position)
 data class MoveNotPossibleByWrongTargetEvent(val gameId: String, val dateTime: LocalDateTime, val chessPiece: ChessPiece, val from: Position, val to: Position)
 
-data class CastlingNotPossibleEvent(val gameId: String, val castlingType: CastlingType)
+data class CastlingNotPossibleEvent(val gameId: String, val dateTime: LocalDateTime, val pieceColor: PieceColor, val castlingType: CastlingType)
 
 
 

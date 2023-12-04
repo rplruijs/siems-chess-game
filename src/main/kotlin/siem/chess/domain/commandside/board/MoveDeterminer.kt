@@ -1,16 +1,16 @@
 package siem.chess.domain.commandside.board
 
 import siem.chess.domain.commandside.board.constants.ChessPiece
-import siem.chess.domain.commandside.gamestatus.Move
 import siem.chess.domain.commandside.board.constants.PieceColor
 import siem.chess.domain.commandside.board.constants.PieceType
 import siem.chess.domain.commandside.exceptions.NoSuchPieceAtSquareException
+import siem.chess.domain.commandside.gamestatus.Move
 import kotlin.math.max
 import kotlin.math.min
 
 object MoveDeterminer {
 
-    fun possibleMoves(from: Square, board: Board): List<Move> {
+    fun possibleMoves(from: Square, board: Board ): List<Move> {
 
         val fromPosition = from.position
         val chessPiece = from.piece ?: throw NoSuchPieceAtSquareException(from)
@@ -39,11 +39,11 @@ object MoveDeterminer {
         }
 
         return when (from.piece.type) {
-            PieceType.KING -> movePossibilities(allTargets(1, from.position, squares))
-            PieceType.QUEEN -> movePossibilities(allTargets(from = from.position, squares = squares))
-            PieceType.ROOK -> movePossibilities(lateralTargets(from = from.position, squares = squares))
+            PieceType.KING   -> movePossibilities(allTargets(1, from.position, squares))
+            PieceType.QUEEN  -> movePossibilities(allTargets(from = from.position, squares = squares))
+            PieceType.ROOK   -> movePossibilities(lateralTargets(from = from.position, squares = squares))
             PieceType.BISHOP -> movePossibilities(diagonalTargets(from = from.position, squares = squares))
-            PieceType.PAWN -> movePawnPossibilities(from.piece.color)
+            PieceType.PAWN   -> movePawnPossibilities(from.piece.color)
             PieceType.KNIGHT -> moveKnightPossibilities()
         }
     }
@@ -52,7 +52,6 @@ object MoveDeterminer {
 
         return possibleTargets.mapNotNull { it ->
             val range = rangeDeterminer(from, it.position, squares)
-
             val move = range.drop(1).all { it.piece == null }
             val capture = range.last.containsPieceOfOppositeColor(chessPiece) && noPiecesBetween(range)
 
@@ -84,7 +83,6 @@ object MoveDeterminer {
     private fun pawnMovementTargetsToMoves(possibleMovements: List<Square>, from: Position, chessPiece: ChessPiece, squares: List<Square>): List<Move> {
 
         return possibleMovements.mapNotNull { it ->
-
             val range = rangeDeterminer(from, it.position, squares)
             val move = range.drop(1).all { it.piece == null }
 

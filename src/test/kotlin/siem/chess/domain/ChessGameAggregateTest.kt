@@ -59,12 +59,12 @@ class ChessGameAggregateTest {
             MoveChessPieceCommand(gameId, now, G1, H3),
             MoveChessPieceCommand(gameId, now, A7, A6),
         ).`when`(CastlingCommand(gameId, now, CastlingType.SHORT_WHITE))
-            .expectEvents(CastlingAppliedEvent(gameId, now, CastlingType.SHORT_WHITE, toBeBoardTextual))
+            .expectEvents(CastlingAppliedEvent(gameId, now, PieceColor.WHITE, CastlingType.SHORT_WHITE, toBeBoardTextual))
     }
 
 
     @Test
-    fun `the famous d2-d4 opening should apply in the correct event` () {
+    fun `the famous d2-d4 opening should apply the correct event` () {
         val toBeBoardTextual = """
             WHITE_ROOK,WHITE_KNIGHT,WHITE_BISHOP,WHITE_KING,WHITE_QUEEN,WHITE_BISHOP,WHITE_KNIGHT,WHITE_ROOK,
             WHITE_PAWN,WHITE_PAWN,WHITE_PAWN,X,WHITE_PAWN,WHITE_PAWN,WHITE_PAWN,WHITE_PAWN,
@@ -78,14 +78,24 @@ class ChessGameAggregateTest {
         """.trimIndent().replace(Regex("[\\r\\n]"), "")
 
         fixture.givenCommands(startCommand)
-            .`when`(MoveChessPieceCommand("42", now, D2, D4))
+            .`when`(d2d4MOve)
             .expectEvents(ChessPieceMovedEvent("42", now, WHITE_PAWN, D2, D4, toBeBoardTextual))
+    }
+
+    @Test
+    fun `It should not be possiblethe same player making multiple moves in a row`() {
+        fixture.givenCommands(startCommand, d2d4MOve)
+            .`when`(e2e4MOve)
+            .expectEvents(MoveAttemptByWrongPlayerEvent(gameId = gameId, dateTime = now, PieceColor.WHITE, E2, E4))
+
     }
 
     companion object {
         val now = LocalDateTime.now()
         val gameId = "42"
         val startCommand = StartGameCommand(gameId, now, "Siem", "Remco")
+        val d2d4MOve = MoveChessPieceCommand(gameId, now, D2, D4)
+        val e2e4MOve = MoveChessPieceCommand(gameId, now, E2, E4)
     }
 
 
