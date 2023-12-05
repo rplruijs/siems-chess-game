@@ -1,7 +1,7 @@
 package siem.chess.adapter.`in`.rest
 
+import siem.chess.adapter.`in`.rest.exceptions.WrongSpecialMoveException
 import siem.chess.domain.commandside.board.Column
-import siem.chess.domain.commandside.board.constants.PieceColor
 import siem.chess.domain.commandside.board.Position
 import siem.chess.domain.commandside.board.Row
 
@@ -40,12 +40,10 @@ fun parseChessPosition(input: String): Position? {
     return Position(column, row)
 }
 
-fun parsePieceColor(color: String): PieceColor? {
-    return when(color.uppercase()) {
-        "WHITE" -> PieceColor.WHITE
-        "BLACK" -> PieceColor.BLACK
-        else   -> null
-    }
+fun parseCastlingMove(input: String): CastlingMove {
+    val inputNormalized = input.replace(Regex("[\\r\\n\\s]"), "")
+         .lowercase()
+    return CastlingMove.values().find { it.expectedInput == inputNormalized} ?: throw WrongSpecialMoveException("Wrong special move $input")
 }
 
-val CASTLING_MOVES = setOf("castling long, castling short")
+enum class CastlingMove(val expectedInput: String){CASTLING_SHORT("castlingshort"), CASTLING_LONG("castlinglong")}

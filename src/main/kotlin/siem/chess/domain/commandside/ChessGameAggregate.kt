@@ -7,6 +7,7 @@ import org.axonframework.modelling.command.AggregateIdentifier
 import org.axonframework.modelling.command.AggregateLifecycle.apply
 import org.axonframework.modelling.command.CreationPolicy
 import org.axonframework.spring.stereotype.Aggregate
+import siem.chess.adapter.`in`.rest.CastlingMove
 import siem.chess.domain.*
 import siem.chess.domain.commandside.board.Board
 import siem.chess.domain.commandside.board.boardTextualOpeningSettling
@@ -50,13 +51,15 @@ class ChessGameAggregate() {
 
        if (winnerAlreadyDetermined()) { return }
 
-       if (isCastlingPossible(command.castlingType)) {
-           val toBeBoard = board.castling(command.castlingType)
+        val castlingType = toCastlingType(command)
+
+       if (isCastlingPossible(castlingType)) {
+           val toBeBoard = board.castling(castlingType)
            apply (
                CastlingAppliedEvent(gameId = command.gameId,
                    dateTime = command.dateTime,
                    pieceColor = this.onMove.pieceColor,
-                   castlingType = command.castlingType,
+                   castlingMove = command.castlingMove,
                    boardTextual =  textualRepresentation(toBeBoard.squares))
            )
        } else {
@@ -64,8 +67,25 @@ class ChessGameAggregate() {
                        gameId = command.gameId,
                        dateTime = command.dateTime,
                        pieceColor = this.onMove.pieceColor,
-                       castlingType = command.castlingType))
+                       castlingMove = command.castlingMove))
        }
+    }
+
+    private fun toCastlingType(command: CastlingCommand): CastlingType {
+        return when (onMove.pieceColor) {
+                PieceColor.WHITE -> {
+                    when(command.castlingMove) {
+                        CastlingMove.CASTLING_LONG  -> CastlingType.LONG_WHITE
+                        CastlingMove.CASTLING_SHORT -> CastlingType.SHORT_WHITE
+                    }
+                }
+                PieceColor.BLACK -> {
+                    when(command.castlingMove) {
+                        CastlingMove.CASTLING_LONG  -> CastlingType.LONG_BLACK
+                        CastlingMove.CASTLING_SHORT -> CastlingType.SHORT_BLACK
+                    }
+                }
+        }
     }
 
     private fun isCastlingPossible(castlingType: CastlingType): Boolean {
@@ -181,6 +201,14 @@ class ChessGameAggregate() {
                 }
             }
             else -> return
+        }
+    }
+
+    @EventSourcingHandler
+    fun on(event: CastlingAppliedEvent) {
+        when(event.pieceColor) {
+            PieceColor.WHITE -> this.castlingDoneByWhite = true
+            PieceColor.BLACK -> this.castlingDoneByBlack = true
         }
     }
 

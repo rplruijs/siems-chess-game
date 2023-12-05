@@ -1,6 +1,7 @@
 package siem.chess.domain
 
 import org.axonframework.modelling.command.TargetAggregateIdentifier
+import siem.chess.adapter.`in`.rest.CastlingMove
 import siem.chess.domain.commandside.board.Position
 import siem.chess.domain.commandside.board.constants.*
 import siem.chess.domain.commandside.gamestatus.Move
@@ -13,7 +14,7 @@ import java.time.LocalDateTime
 data class StartGameCommand(@TargetAggregateIdentifier val gameId:String, val dateTime: LocalDateTime, val whitePlayer: String, val blackPlayer: String)
 data class MoveChessPieceCommand (@TargetAggregateIdentifier val gameId:String, val dateTime: LocalDateTime, val from: Position, val to: Position)
 
-data class CastlingCommand(@TargetAggregateIdentifier val gameId: String, val dateTime: LocalDateTime, val castlingType: CastlingType)
+data class CastlingCommand(@TargetAggregateIdentifier val gameId: String, val dateTime: LocalDateTime, val castlingMove: CastlingMove)
 
 enum class CastlingType(val kingMove: Move, val rookMove: Move){
    SHORT_WHITE (kingMove = Move(piece = WHITE_KING, from=A1, to=D1), rookMove = Move(piece = WHITE_ROOK, E1, C1)),
@@ -28,7 +29,7 @@ enum class CastlingType(val kingMove: Move, val rookMove: Move){
  */
 data class GameStartedEvent(val gameId: String, val dateTime: LocalDateTime, val whitePlayer: String, val blackPlayer: String, val boardTextual: String)
 data class ChessPieceMovedEvent(val gameId: String, val dateTime: LocalDateTime, val chessPiece: ChessPiece, val from: Position, val to: Position, val boardTextual: String)
-data class CastlingAppliedEvent(val gameId: String, val dateTime: LocalDateTime, val pieceColor: PieceColor, val castlingType: CastlingType, val boardTextual: String)
+data class CastlingAppliedEvent(val gameId: String, val dateTime: LocalDateTime, val pieceColor: PieceColor, val castlingMove: CastlingMove, val boardTextual: String)
 data class CheckEvent(val gameId: String, val dateTime: LocalDateTime, val check: PieceColor, val boardTextual: String)
 data class GameEndedByCheckMateEvent(val gameId: String, val dateTime: LocalDateTime, val winner: PieceColor, val boardTextual: String)
 
@@ -36,7 +37,7 @@ data class MoveAttemptByWrongPlayerEvent(val gameId: String, val dateTime: Local
 data class MoveNotPossibleByMissingChessPieceEvent(val gameId: String, val dateTime: LocalDateTime, val from: Position, val to: Position)
 data class MoveNotPossibleByWrongTargetEvent(val gameId: String, val dateTime: LocalDateTime, val chessPiece: ChessPiece, val from: Position, val to: Position)
 
-data class CastlingNotPossibleEvent(val gameId: String, val dateTime: LocalDateTime, val pieceColor: PieceColor, val castlingType: CastlingType)
+data class CastlingNotPossibleEvent(val gameId: String, val dateTime: LocalDateTime, val pieceColor: PieceColor, val castlingMove: CastlingMove)
 
 
 

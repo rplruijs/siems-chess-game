@@ -1,12 +1,13 @@
 package siem.chess.application.repositories
 
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import org.assertj.core.api.Assertions.*
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.testcontainers.junit.jupiter.Testcontainers
 import siem.chess.ChessApplication
 import siem.chess.TestChessApplication
+import siem.chess.domain.queryside.ActorType
 import siem.chess.domain.queryside.LogMessage
 import siem.chess.domain.queryside.LogMessageType
 import java.time.LocalDateTime
@@ -28,11 +29,47 @@ class ChessGameInfoRepositoryTest {
         val nowPlus1Second = now.plusSeconds(1)
         val nowPlus2Second = now.plusSeconds(2)
 
-        givenLogMessage(LogMessage(gameId = "43", logTime = now, logMessageType = LogMessageType.GAME_STARTED, message = "Game started"))
-        givenLogMessage(LogMessage(gameId = "43" ,logTime = nowPlus1Second, logMessageType = LogMessageType.MOVE_BY_WHITE, message = "D2-D4"))
-        givenLogMessage(LogMessage(gameId = "43", logTime = nowPlus2Second, logMessageType = LogMessageType.MOVE_BY_BLACK, message = "D7-D5"))
 
-        givenLogMessage(LogMessage(gameId = "11", now, logMessageType = LogMessageType.GAME_STARTED, "D7-D5"))
+
+
+        val logMessageStartGame43 = LogMessage(
+            gameId = "43",
+            logTime = now,
+            logMessageType = LogMessageType.GAME_STARTED,
+            causedBy = ActorType.SYSTEM,
+            message = "Game started"
+        )
+
+        val logMessageD2D4Game43 = LogMessage(
+            gameId = "43" ,
+            logTime = nowPlus1Second,
+            logMessageType = LogMessageType.MOVE,
+            causedBy = ActorType.WHITE_PLAYER,
+            message = "D2-D4")
+
+        val logMessageD7D5Game43 = LogMessage(
+            gameId = "43",
+            logTime = nowPlus2Second,
+            logMessageType = LogMessageType.MOVE,
+            message = "D7-D5",
+            causedBy = ActorType.BLACK_PLAYER,
+        )
+
+
+        val logMessageStartGame11 = LogMessage(
+            gameId = "11",
+            logTime = now,
+            logMessageType = LogMessageType.GAME_STARTED,
+            causedBy = ActorType.SYSTEM,
+            message = "Game started")
+
+
+
+        givenLogMessage(logMessageStartGame43)
+        givenLogMessage(logMessageD2D4Game43)
+        givenLogMessage(logMessageD7D5Game43)
+
+        givenLogMessage(logMessageStartGame11)
 
 
         //When
@@ -41,11 +78,7 @@ class ChessGameInfoRepositoryTest {
         //Then
         assertThat(checkGameLogInfo.gameId).isEqualTo("43")
 
-        val expectedCheckGameLogInfo =  listOf(
-            LogMessage(gameId = "43", logTime = now, logMessageType = LogMessageType.GAME_STARTED, message = "Game started"),
-            LogMessage(gameId = "43" ,logTime = nowPlus1Second, logMessageType = LogMessageType.MOVE_BY_WHITE, message = "D2-D4"),
-            LogMessage(gameId = "43", logTime = nowPlus2Second, logMessageType = LogMessageType.MOVE_BY_BLACK, message = "D7-D5")
-        )
+        val expectedCheckGameLogInfo =  listOf(logMessageStartGame43, logMessageD2D4Game43, logMessageD7D5Game43)
 
         assertThat(checkGameLogInfo.entries).hasSameElementsAs(expectedCheckGameLogInfo)
     }

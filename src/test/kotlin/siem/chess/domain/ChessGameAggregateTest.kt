@@ -3,6 +3,7 @@ package siem.chess.domain
 import org.axonframework.test.aggregate.AggregateTestFixture
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import siem.chess.adapter.`in`.rest.CastlingMove
 import siem.chess.domain.commandside.ChessGameAggregate
 import siem.chess.domain.commandside.board.boardTextualOpeningSettling
 import siem.chess.domain.commandside.board.constants.*
@@ -58,8 +59,8 @@ class ChessGameAggregateTest {
             MoveChessPieceCommand(gameId, now, D7, D6),
             MoveChessPieceCommand(gameId, now, G1, H3),
             MoveChessPieceCommand(gameId, now, A7, A6),
-        ).`when`(CastlingCommand(gameId, now, CastlingType.SHORT_WHITE))
-            .expectEvents(CastlingAppliedEvent(gameId, now, PieceColor.WHITE, CastlingType.SHORT_WHITE, toBeBoardTextual))
+        ).`when`(CastlingCommand(gameId, now, CastlingMove.CASTLING_SHORT))
+            .expectEvents(CastlingAppliedEvent(gameId, now, PieceColor.WHITE, CastlingMove.CASTLING_SHORT, toBeBoardTextual))
     }
 
 

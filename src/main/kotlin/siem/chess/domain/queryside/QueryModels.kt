@@ -10,30 +10,29 @@ data class ChessGameMove(val gameId: String, val executionTime: LocalDateTime, v
 data class ChessGameLog(val gameId: String, val entries: List<LogMessage>)
 
 
-data class LogMessage(val gameId: String, val logTime: LocalDateTime, val logMessageType: LogMessageType, val message: String)
+data class LogMessage(val gameId: String,
+                      val logTime: LocalDateTime,
+                      val message: String,
+                      val causedBy: ActorType,
+                      val logMessageType: LogMessageType,
+                      val logLevel: LogLevel =  LogLevel.INFO)
 
+enum class LogMessageType {
+    GAME_STARTED,
+    MOVE,
+    WRONG_MOVE,
+    CHECK,
+    CHECK_MATE,
+    SHORT_CASTLING,
+    LONG_CASTLING,
+    WRONG_SHORT_CASTLING,
+    WRONG_LONG_CASTLING
+}
 
+enum class LogLevel {
+    INFO, WARN, ERROR
+}
 
-val BLACK = "text-black"
-val WHITE = "text-white"
-val RED = "text-red"
-
-enum class LogMessageType(color:String) {
-    GAME_STARTED(BLACK),
-    MOVE_BY_WHITE(WHITE),
-    MOVE_BY_BLACK(BLACK),
-    WRONG_MOVE_BY_BLACK(RED),
-    WRONG_MOVE_BY_WHITE(RED),
-    CHECK_BY_WHITE(WHITE),
-    CHECK_BY_BLACK(BLACK),
-    CHECK_MATE_BY_WHITE(WHITE),
-    SHORT_CASTLING_WHITE(WHITE),
-    SHORT_CASTLING_BLACK(BLACK),
-    LONG_CASTLING_WHITE(WHITE),
-    LONG_CASTLING_BLACK(BLACK),
-    WRONG_SHORT_CASTLING_WHITE(RED),
-    WRONG_SHORT_CASTLING_BLACK(RED),
-    WRONG_LONG_CASTLING_WHITE(RED),
-    WRONG_LONG_CASTLING_BLACK(RED),
-    CHECK_MATE_BY_BLACK(BLACK),
+enum class ActorType {
+    SYSTEM, WHITE_PLAYER, BLACK_PLAYER
 }

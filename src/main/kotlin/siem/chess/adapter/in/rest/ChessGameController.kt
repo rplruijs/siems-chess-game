@@ -11,10 +11,7 @@ import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation.*
 import reactor.core.publisher.Flux
 import siem.chess.adapter.`in`.rest.exceptions.InvalidChessMoveException
-import siem.chess.domain.ChessGameLogInfoQuery
-import siem.chess.domain.ChessMoveQuery
-import siem.chess.domain.MoveChessPieceCommand
-import siem.chess.domain.StartGameCommand
+import siem.chess.domain.*
 import siem.chess.domain.commandside.board.Position
 import siem.chess.domain.queryside.ChessGame
 import siem.chess.domain.queryside.ChessGameLog
@@ -29,7 +26,7 @@ import java.util.concurrent.CompletableFuture
 class ChessGameController(val commandGateway: CommandGateway, val queryGateway: QueryGateway, val htmlSnippetComposer: HtmlSnippetComposer) {
 
     @PostMapping("/start")
-    fun start(@RequestParam whitePlayer: String, @RequestParam blackPlayer: String, response: HttpServletResponse): String {
+    fun start(@RequestParam whitePlayer: String, @RequestParam blackPlayer: String, response: HttpServletResponse) {
         val gameId = UUID.randomUUID().toString()
         commandGateway.send<StartGameCommand>(StartGameCommand(
             gameId = gameId,
@@ -38,7 +35,6 @@ class ChessGameController(val commandGateway: CommandGateway, val queryGateway: 
             blackPlayer = blackPlayer)
         )
         addGameIdAsCookie(gameId, response)
-        return "$whitePlayer speelt met wit tegen $blackPlayer met zwart."
     }
 
     @PostMapping("/move")
@@ -52,6 +48,18 @@ class ChessGameController(val commandGateway: CommandGateway, val queryGateway: 
                 dateTime = LocalDateTime.now(),
                 from = fromPosition,
                 to = toPosition)
+        )
+    }
+
+    @PostMapping("/move/castling")
+    fun castlingMove(@RequestParam castlingMove: String, request: HttpServletRequest) {
+
+        commandGateway.send<CastlingCommand>(
+            CastlingCommand(
+                gameId = extractGameIdFromCookie(request),
+                dateTime = LocalDateTime.now(),
+                castlingMove = parseCastlingMove(castlingMove)
+            )
         )
     }
 

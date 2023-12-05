@@ -25,24 +25,38 @@ DROP TYPE IF EXISTS log_message_type;
 
 CREATE TYPE log_message_type AS ENUM (
     'GAME_STARTED',
-    'MOVE_BY_WHITE',
-    'MOVE_BY_BLACK',
-    'WRONG_MOVE_BY_BLACK',
-    'WRONG_MOVE_BY_WHITE',
-    'CHECK_BY_WHITE',
-    'CHECK_BY_BLACK',
-    'CHECK_MATE_BY_WHITE',
-    'CHECK_MATE_BY_BLACK'
-    );
+    'MOVE',
+    'WRONG_MOVE',
+    'CHECK',
+    'CHECK_MATE',
+    'SHORT_CASTLING',
+    'LONG_CASTLING',
+    'WRONG_SHORT_CASTLING',
+    'WRONG_LONG_CASTLING'
+);
 
+
+DROP TYPE IF EXISTS actor_type;
+
+CREATE TYPE actor_type AS ENUM (
+    'WHITE_PLAYER','BLACK_PLAYER','SYSTEM'
+);
+
+DROP TYPE IF EXISTS log_level;
+
+CREATE TYPE log_level AS ENUM (
+  'INFO','WARN','ERROR'
+);
 
 
 create table if not exists chessgameinfolog
 (
-    id varchar(54) not null,
+    gameId varchar(54) not null,
     logTime timestamp not null,
     logMessage text not null,
-    logMessageType log_message_type NOT NULL
+    causedBy actor_type not null,
+    logMessageType log_message_type NOT NULL,
+    logLevel log_level NOT NULL
 );
 
 delete from chessgameinfolog;
