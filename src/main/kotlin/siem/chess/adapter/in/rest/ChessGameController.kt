@@ -16,6 +16,7 @@ import siem.chess.domain.commandside.board.Position
 import siem.chess.domain.queryside.ChessGame
 import siem.chess.domain.queryside.ChessGameLog
 import siem.chess.domain.queryside.ChessGameMove
+import siem.chess.domain.queryside.ChessGameState
 import java.time.LocalDateTime
 import java.util.*
 import java.util.concurrent.CompletableFuture
@@ -64,7 +65,7 @@ class ChessGameController(val commandGateway: CommandGateway, val queryGateway: 
     }
 
     @GetMapping("/updates/move")
-    fun updates(request: HttpServletRequest) : Flux<ServerSentEvent<HtmlSnippet>> {
+    fun moveUpdates(request: HttpServletRequest) : Flux<ServerSentEvent<HtmlSnippet>> {
         val query = queryGateway.subscriptionQuery(
             ChessMoveQuery(gameId = extractGameIdFromCookie(request)),
             ResponseTypes.instanceOf(ChessGameMove::class.java),
@@ -77,7 +78,7 @@ class ChessGameController(val commandGateway: CommandGateway, val queryGateway: 
     }
 
     @GetMapping("/updates/log")
-    fun moveUpdates(request: HttpServletRequest) : Flux<ServerSentEvent<HtmlSnippet>> {
+    fun logUpdates(request: HttpServletRequest) : Flux<ServerSentEvent<HtmlSnippet>> {
         val query = queryGateway.subscriptionQuery(
             ChessGameLogInfoQuery(gameId = extractGameIdFromCookie(request)),
             ResponseTypes.instanceOf(ChessGameLog::class.java),
@@ -86,6 +87,19 @@ class ChessGameController(val commandGateway: CommandGateway, val queryGateway: 
         return query.initialResult()
             .concatWith( query.updates())
             .map { ServerSentEvent.builder(htmlSnippetComposer.toHtmlChessLogTable(it.entries)).build() }
+    }
+
+
+    @GetMapping("/updates/turn")
+    fun turnUpdates(request: HttpServletRequest) : Flux<ServerSentEvent<HtmlSnippet>> {
+        val query = queryGateway.subscriptionQuery(
+            ChessGameTurnQuery(gameId = extractGameIdFromCookie(request)),
+            ResponseTypes.instanceOf(ChessGameState::class.java),
+            ResponseTypes.instanceOf(ChessGameState::class.java))
+
+        return query.initialResult()
+            .concatWith( query.updates())
+            .map { ServerSentEvent.builder(htmlSnippetComposer.toTurnForm(it)).build() }
     }
 
 

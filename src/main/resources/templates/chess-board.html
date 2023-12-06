@@ -50,6 +50,21 @@
             eventSourceLogs.onerror = function (error) {
                 console.error('SSE Error when retrieving log:', error);
             };
+
+            const eventSourceNextTurn = new EventSource(`/api/chess-games/updates/turn`);
+            eventSourceLogs.onmessage = function (event) {
+
+                console.log('Received SSE event:', event.data);
+                const logContainer = document.getElementById('log');
+                logContainer.innerHTML = event.data;
+            };
+            eventSourceLogs.onerror = function (error) {
+                console.error('SSE Error when retrieving log:', error);
+            };
+
+
+
+
         }
     </script>
 </head>
@@ -86,35 +101,36 @@
         </form>
     </div>
 
+    <div id="turn">
+        <div class="bg-white p-8 rounded shadow-md w-96">
+            <h2 class="text-2xl font-semibold mb-6 text-center">Volgende zet?</h2>
+            <form hx-post="/api/chess-games/move" hx-target="#gameId" class="flex flex-col items-center">
+                <div class="mb-2">
+                    <label for="from" class="block text-gray-700 text-sm font-bold mb-2">Van</label>
+                    <input type="text"
+                           id="from"
+                           name="from"
+                           class="w-full border border-gray-300 p-2 rounded-md"
+                           placeholder="voorbeeld D2">
+                </div>
 
-
-    <div class="bg-white p-8 rounded shadow-md w-96">
-        <h2 class="text-2xl font-semibold mb-6 text-center">Volgende zet?</h2>
-        <form hx-post="/api/chess-games/move" hx-target="#gameId" class="flex flex-col items-center">
-            <div class="mb-2">
-                <label for="from" class="block text-gray-700 text-sm font-bold mb-2">Van</label>
-                <input type="text"
-                       id="from"
-                       name="from"
-                       class="w-full border border-gray-300 p-2 rounded-md"
-                       placeholder="voorbeeld D2">
-            </div>
-
-            <div class="mb-2">
-                <label for="to" class="block text-gray-700 text-sm font-bold mb-2">Naar</label>
-                <input type="text"
-                       id="to"
-                       name="to"
-                       class="w-full border border-gray-300 p-2 rounded-md"
-                       placeholder="voorbeeld D4">
-            </div>
-            <div class="flex justify-center">
-                <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                    Move
-                </button>
-            </div>
-        </form>
+                <div class="mb-2">
+                    <label for="to" class="block text-gray-700 text-sm font-bold mb-2">Naar</label>
+                    <input type="text"
+                           id="to"
+                           name="to"
+                           class="w-full border border-gray-300 p-2 rounded-md"
+                           placeholder="voorbeeld D4">
+                </div>
+                <div class="flex justify-center">
+                    <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                        Move
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
+
 
     <div id="gameId" hidden="hidden" class="text-center mt-4"></div>
 

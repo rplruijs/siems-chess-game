@@ -36,6 +36,15 @@ CREATE TYPE log_message_type AS ENUM (
 );
 
 
+
+DROP TYPE IF EXISTS piece_color;
+
+CREATE TYPE piece_color AS ENUM(
+    'BLACK', 'WHITE'
+);
+
+
+
 DROP TYPE IF EXISTS actor_type;
 
 CREATE TYPE actor_type AS ENUM (
@@ -60,6 +69,21 @@ create table if not exists chessgameinfolog
 );
 
 delete from chessgameinfolog;
+
+create table if not exists chess_game_state
+(
+    gameId varchar(54) not null primary key,
+    currentTurn piece_color,
+    turnNumber int not null,
+    castlingShortStillPossibleByWhite boolean not null,
+    castlingLongStillPossibleByWhite boolean not null,
+    castlingShortStillPossibleByBlack boolean not null,
+    castlingLongStillPossibleByBlack boolean not null,
+    settling text not null
+);
+
+
+delete from chess_game_state;
 
 
 create table if not exists tokenentry

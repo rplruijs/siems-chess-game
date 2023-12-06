@@ -49,6 +49,7 @@ data class CastlingNotPossibleEvent(val gameId: String, val dateTime: LocalDateT
 data class ChessMoveQuery(val gameId: String)
 
 data class ChessGameLogInfoQuery(val gameId: String)
+data class ChessGameTurnQuery(val gameId: String)
 
 
 
