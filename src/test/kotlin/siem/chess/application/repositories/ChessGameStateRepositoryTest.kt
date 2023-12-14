@@ -10,6 +10,7 @@ import siem.chess.TestChessApplication
 import siem.chess.domain.commandside.board.boardTextualOpeningSettling
 import siem.chess.domain.commandside.board.constants.PieceColor
 import siem.chess.domain.queryside.ChessGameState
+import siem.chess.domain.queryside.GameState
 
 @Testcontainers
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
@@ -22,12 +23,11 @@ class ChessGameStateRepositoryTest {
 
     @Test
     fun `retrieveGameState should return  the gameState of a chessGame with a given gameId` () {
-
         //Given
         val gameId = "18"
-
         val gameState = ChessGameState(
             gameId = gameId,
+            gameState = GameState.STARTED,
             currentTurn = PieceColor.WHITE,
             turnNumber = 1,
             castlingShortStillPossibleByWhite = true,
@@ -41,8 +41,6 @@ class ChessGameStateRepositoryTest {
 
         //When
         val result = chessGameStateRepository.retrieveGameState(gameId)
-
-
         //Then
         Assertions.assertThat(gameState).isEqualTo(result)
 

@@ -20,13 +20,49 @@ data class ChessGameLog(val gameId: String,
                         val entries: List<LogMessage>)
 
 data class ChessGameState(val gameId: String,
+                          val gameState: GameState,
                           val currentTurn: PieceColor,
                           val turnNumber: Int,
                           val castlingShortStillPossibleByWhite: Boolean,
                           val castlingLongStillPossibleByWhite: Boolean,
                           val castlingShortStillPossibleByBlack: Boolean,
                           val castlingLongStillPossibleByBlack: Boolean,
-                          val settling: String)
+                          val settling: String) {
+
+    fun castlingNotPossibleFor(color: PieceColor): ChessGameState {
+        return when(color) {
+            PieceColor.WHITE -> this.copy(castlingShortStillPossibleByWhite = false, castlingLongStillPossibleByWhite = false)
+            PieceColor.BLACK -> this.copy(castlingShortStillPossibleByBlack = false, castlingLongStillPossibleByBlack = false)
+        }
+    }
+
+
+    fun castlingShortNotPossible(color: PieceColor): ChessGameState {
+        return when(color) {
+            PieceColor.WHITE -> this.copy(castlingShortStillPossibleByWhite = false)
+            PieceColor.BLACK -> this.copy(castlingShortStillPossibleByBlack = false)
+        }
+    }
+
+    fun castlingLongNotPossible(color: PieceColor): ChessGameState {
+        return when(color) {
+            PieceColor.WHITE -> this.copy(castlingLongStillPossibleByWhite = false)
+            PieceColor.BLACK -> this.copy(castlingLongStillPossibleByBlack = false)
+        }
+    }
+
+    fun defaultChessGameStateFlip(boardTextual: String): ChessGameState {
+        return this.copy(
+            currentTurn = this.currentTurn.opposite(),
+            turnNumber = this.turnNumber + 1,
+            settling = boardTextual
+        )
+    }
+
+    fun endedGame(): ChessGameState {
+        return this.copy(gameState = GameState.ENDED)
+    }
+}
 
 
 data class LogMessage(val gameId: String,
@@ -54,4 +90,8 @@ enum class LogLevel {
 
 enum class ActorType {
     SYSTEM, WHITE_PLAYER, BLACK_PLAYER
+}
+
+enum class GameState {
+    CREATED, STARTED, PAUSED, ENDED
 }

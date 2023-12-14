@@ -4,6 +4,7 @@ import org.springframework.jdbc.core.simple.JdbcClient
 import org.springframework.stereotype.Component
 import siem.chess.domain.commandside.board.constants.PieceColor
 import siem.chess.domain.queryside.ChessGameState
+import siem.chess.domain.queryside.GameState
 import java.sql.Types
 
 @Component
@@ -12,13 +13,15 @@ class ChessGameStateRepository(val jdbcClient: JdbcClient) {
     fun upsertGameState(chessGameState: ChessGameState) {
         val sql = """
                     insert into chess_game_state values(:gameId,
+                                                     :gameState,
                                                      :currentTurn,
                                                      :turnNumber,
                                                      :castlingShortStillPossibleByWhite,
                                                      :castlingLongStillPossibleByWhite,
                                                      :castlingShortStillPossibleByBlack,
                                                      :castlingLongStillPossibleByBlack,
-                                                     :settling) ON CONFLICT(gameId) DO UPDATE SET 
+                                                     :settling) ON CONFLICT(gameId) DO UPDATE SET
+                                                         gameState = :gameState,
                                                          currentTurn = :currentTurn,
                                                          turnNumber = :turnNumber,
                                                          castlingShortStillPossibleByWhite = :castlingShortStillPossibleByWhite,
@@ -31,6 +34,7 @@ class ChessGameStateRepository(val jdbcClient: JdbcClient) {
 
         this.jdbcClient.sql(sql)
             .param("gameId", chessGameState.gameId)
+            .param("gameState", chessGameState.gameState, Types.OTHER)
             .param("currentTurn", chessGameState.currentTurn, Types.OTHER)
             .param("turnNumber", chessGameState.turnNumber, Types.INTEGER)
             .param("castlingShortStillPossibleByWhite", chessGameState.castlingShortStillPossibleByWhite, Types.BOOLEAN)
@@ -49,6 +53,7 @@ class ChessGameStateRepository(val jdbcClient: JdbcClient) {
             .query { rs, _ ->
                 ChessGameState(
                     gameId = gameId,
+                    gameState = GameState.valueOf(rs.getString("gameState")),
                     currentTurn = PieceColor.valueOf(rs.getString("currentTurn")),
                     turnNumber = rs.getInt("turnNumber"),
                     castlingShortStillPossibleByWhite = rs.getBoolean("castlingShortStillPossibleByWhite"),

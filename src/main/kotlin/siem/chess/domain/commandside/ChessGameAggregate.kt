@@ -7,7 +7,6 @@ import org.axonframework.modelling.command.AggregateIdentifier
 import org.axonframework.modelling.command.AggregateLifecycle.apply
 import org.axonframework.modelling.command.CreationPolicy
 import org.axonframework.spring.stereotype.Aggregate
-import siem.chess.adapter.`in`.rest.CastlingMove
 import siem.chess.domain.*
 import siem.chess.domain.commandside.board.Board
 import siem.chess.domain.commandside.board.boardTextualOpeningSettling
@@ -16,6 +15,9 @@ import siem.chess.domain.commandside.board.generateChessBoardWithOpeningSettling
 import siem.chess.domain.commandside.board.textualRepresentation
 import siem.chess.domain.commandside.exceptions.MoveNotPossibleException
 import siem.chess.domain.commandside.exceptions.PieceNotFoundAtPositionException
+import siem.chess.domain.commandside.exceptions.WrongSettlingForLongCastlingException
+import siem.chess.domain.commandside.exceptions.WrongSettlingForShortCastlingException
+import siem.chess.domain.commandside.gamestatus.Move
 import siem.chess.domain.commandside.player.Player
 
 @Aggregate
@@ -34,8 +36,11 @@ class ChessGameAggregate() {
     private var longCastlingStillPossibleByWhite: Boolean = true
     private var longCastlingStillPossibleByBlack: Boolean = true
 
-    private var castlingDoneByWhite: Boolean =  false
-    private var castlingDoneByBlack: Boolean =  false
+    private var shortCastlingDoneByWhite: Boolean =  false
+    private var shortCastlingDoneByBlack: Boolean =  false
+    private var longCastlingDoneByWhite: Boolean =  false
+    private var longCastlingDoneByBlack: Boolean =  false
+
 
     private var winner: Player? = null
 
@@ -47,53 +52,78 @@ class ChessGameAggregate() {
     }
 
     @CommandHandler
-    fun handle(command: CastlingCommand) {
+    fun handle(command: ShortCastlingCommand) {
 
        if (winnerAlreadyDetermined()) { return }
 
-        val castlingType = toCastlingType(command)
+        if (shortCastlingStillPossible()) {
+            try {
+                val toBeBoard = board.castlingShort(onMove.pieceColor)
 
-       if (isCastlingPossible(castlingType)) {
-           val toBeBoard = board.castling(castlingType)
-           apply (
-               CastlingAppliedEvent(gameId = command.gameId,
-                   dateTime = command.dateTime,
-                   pieceColor = this.onMove.pieceColor,
-                   castlingMove = command.castlingMove,
-                   boardTextual =  textualRepresentation(toBeBoard.squares))
-           )
-       } else {
-           apply ( CastlingNotPossibleEvent(
+                apply (
+                    ShortCastlingAppliedEvent(gameId = command.gameId,
+                        dateTime = command.dateTime,
+                        pieceColor = this.onMove.pieceColor,
+                        boardTextual =  textualRepresentation(toBeBoard.squares))
+                )
+            } catch (ex: WrongSettlingForShortCastlingException) {
+                apply(ShortCastlingNotPossibleBecauseWrongSettlingEvent(
+                    gameId = command.gameId,
+                    dateTime = command.dateTime,
+                    pieceColor = this.onMove.pieceColor)
+                )
+            }
+        } else {
+           apply ( ShortCastlingNotPossibleBecauseRookAndOrKingAreMovedAlreadyEvent(
                        gameId = command.gameId,
                        dateTime = command.dateTime,
-                       pieceColor = this.onMove.pieceColor,
-                       castlingMove = command.castlingMove))
+                       pieceColor = this.onMove.pieceColor
+                       )
+           )
        }
     }
 
-    private fun toCastlingType(command: CastlingCommand): CastlingType {
-        return when (onMove.pieceColor) {
-                PieceColor.WHITE -> {
-                    when(command.castlingMove) {
-                        CastlingMove.CASTLING_LONG  -> CastlingType.LONG_WHITE
-                        CastlingMove.CASTLING_SHORT -> CastlingType.SHORT_WHITE
-                    }
-                }
-                PieceColor.BLACK -> {
-                    when(command.castlingMove) {
-                        CastlingMove.CASTLING_LONG  -> CastlingType.LONG_BLACK
-                        CastlingMove.CASTLING_SHORT -> CastlingType.SHORT_BLACK
-                    }
-                }
+    @CommandHandler
+    fun handle(command: LongCastlingCommand) {
+
+        if (winnerAlreadyDetermined()) { return }
+
+        if (longCastlingStillPossible()) {
+            try {
+                val toBeBoard = board.castlingLong(onMove.pieceColor)
+                apply (
+                    LongCastlingAppliedEvent(gameId = command.gameId,
+                        dateTime = command.dateTime,
+                        pieceColor = this.onMove.pieceColor,
+                        boardTextual =  textualRepresentation(toBeBoard.squares))
+                )
+            } catch (ex: WrongSettlingForLongCastlingException){
+                apply (
+                    LongCastlingNotPossibleBecauseWrongSettlingEvent(gameId = command.gameId,
+                        dateTime = command.dateTime,
+                        pieceColor = this.onMove.pieceColor)
+                )
+            }
+        } else {
+            apply ( LongCastlingNotPossibleBecauseRookAndOrKingAreMovedAlreadyEvent(
+                gameId = command.gameId,
+                dateTime = command.dateTime,
+                pieceColor = this.onMove.pieceColor
+            ))
         }
     }
 
-    private fun isCastlingPossible(castlingType: CastlingType): Boolean {
-        return when(castlingType) {
-                    CastlingType.SHORT_BLACK -> shortCastlingStillPossibleByBlack
-                    CastlingType.SHORT_WHITE -> shortCastlingStillPossibleByWhite
-                    CastlingType.LONG_BLACK  -> longCastlingStillPossibleByBlack
-                    CastlingType.LONG_WHITE  -> longCastlingStillPossibleByWhite
+    private fun shortCastlingStillPossible(): Boolean {
+        return when(onMove.pieceColor) {
+                    PieceColor.BLACK -> shortCastlingStillPossibleByBlack
+                    PieceColor.WHITE -> shortCastlingStillPossibleByWhite
+        }
+    }
+
+    private fun longCastlingStillPossible(): Boolean {
+        return when(onMove.pieceColor) {
+            PieceColor.BLACK -> longCastlingStillPossibleByBlack
+            PieceColor.WHITE -> longCastlingStillPossibleByWhite
         }
     }
 
@@ -116,8 +146,13 @@ class ChessGameAggregate() {
                     from = lastMove.from,
                     to = lastMove.to,
                     boardTextual = textualRepresentation(toBeBoard.squares)
+                ))
+                .andThenApplyIf({castlingShortNotPossibleAnyMoreCausedByMove(lastMove)},
+                    {ShortCastlingNotPossibleAnyMoreEvent(gameId = command.gameId, dateTime = command.dateTime, color = onMove.pieceColor)}
                 )
-            )
+                .andThenApplyIf({castlingLongNotPossibleAnyMoreCausedByMove(lastMove)},
+                    {LongCastlingNotPossibleAnyMoreEvent(gameId = command.gameId, dateTime = command.dateTime, color = onMove.pieceColor)}
+                )
                 .andThenApplyIf(
                     { toBeBoard.gameStatus?.check },
                     { CheckEvent(gameId = command.gameId, dateTime = command.dateTime, check = onMove.pieceColor.opposite(), boardTextual = textualRepresentation(this.board.squares)) }
@@ -147,6 +182,47 @@ class ChessGameAggregate() {
         }
     }
 
+    private fun castlingShortNotPossibleAnyMoreCausedByMove(lastMove: Move): Boolean {
+
+        val shortCastlingStillPossible = when (lastMove.piece.color) {
+            PieceColor.WHITE -> shortCastlingStillPossibleByWhite
+            PieceColor.BLACK -> shortCastlingStillPossibleByBlack
+        }
+
+        if(!shortCastlingStillPossible) {
+            return false
+        } else {
+            when (lastMove.piece) {
+                WHITE_ROOK -> { if (lastMove.from == H1) { return true } }
+                BLACK_ROOK -> { if (lastMove.from == H8) { return true } }
+                BLACK_KING -> { if (lastMove.from == E8) { return true } }
+                WHITE_KING -> { if (lastMove.from == E1) { return true } }
+            }
+        }
+        return false
+    }
+
+    private fun castlingLongNotPossibleAnyMoreCausedByMove(lastMove: Move): Boolean {
+
+        val longCastlingStillPossible = when (lastMove.piece.color) {
+            PieceColor.WHITE -> longCastlingStillPossibleByWhite
+            PieceColor.BLACK -> longCastlingStillPossibleByBlack
+        }
+
+        if(!longCastlingStillPossible) {
+            return false
+        }
+
+        when (lastMove.piece) {
+            WHITE_ROOK -> { if (lastMove.from == A1) { return true} }
+            BLACK_ROOK -> { if (lastMove.from == A8) { return true} }
+            BLACK_KING -> { if (lastMove.from == E8) { return true} }
+            WHITE_KING -> { if (lastMove.from == E1) { return true} }
+        }
+
+        return false
+    }
+
     private fun moveDoneByWrongPlayer(command: MoveChessPieceCommand): Boolean {
         return !this.board.pieceOfColorOnPosition(onMove.pieceColor, command.from)
     }
@@ -171,44 +247,57 @@ class ChessGameAggregate() {
             PieceColor.WHITE -> blackPlayer
             PieceColor.BLACK -> whitePlayer
         }
-        handleCastlingLogic(event)
     }
 
-    private fun handleCastlingLogic(event: ChessPieceMovedEvent) {
-        when (event.chessPiece) {
-            WHITE_ROOK -> {
-                    when (event.from) {
-                        A1 -> this.longCastlingStillPossibleByWhite = false
-                        H1 -> this.shortCastlingStillPossibleByWhite = false
-                    }
-                }
-            BLACK_ROOK -> {
-                    when (event.from) {
-                        A8 -> this.longCastlingStillPossibleByBlack = false
-                        H8 -> this.shortCastlingStillPossibleByBlack = false
-                    }
+    @EventSourcingHandler
+    fun on(event: ShortCastlingAppliedEvent) {
+        when(event.pieceColor) {
+            PieceColor.WHITE -> {
+                this.shortCastlingDoneByWhite = true
+                this.longCastlingStillPossibleByWhite = false
+                this.shortCastlingStillPossibleByWhite = false
+                this.onMove = blackPlayer
             }
-            BLACK_KING -> {
-                if (event.from == E8) {
-                    this.longCastlingStillPossibleByBlack = false
-                    this.shortCastlingStillPossibleByBlack = false
-                }
+            PieceColor.BLACK -> {
+                this.shortCastlingDoneByBlack = true
+                this.longCastlingStillPossibleByBlack = false
+                this.shortCastlingStillPossibleByBlack = false
+                this.onMove = whitePlayer
             }
-            WHITE_KING -> {
-                if (event.from == E1) {
-                    this.longCastlingStillPossibleByWhite = false
-                    this.shortCastlingStillPossibleByWhite = false
-                }
-            }
-            else -> return
         }
     }
 
     @EventSourcingHandler
-    fun on(event: CastlingAppliedEvent) {
+    fun on(event: LongCastlingAppliedEvent) {
         when(event.pieceColor) {
-            PieceColor.WHITE -> this.castlingDoneByWhite = true
-            PieceColor.BLACK -> this.castlingDoneByBlack = true
+            PieceColor.WHITE -> {
+                this.longCastlingDoneByWhite = true
+                this.longCastlingStillPossibleByWhite = false
+                this.shortCastlingStillPossibleByWhite = false
+                this.onMove = blackPlayer
+            }
+            PieceColor.BLACK -> {
+                this.longCastlingDoneByBlack = true
+                this.longCastlingStillPossibleByBlack = false
+                this.shortCastlingStillPossibleByBlack = false
+                this.onMove = whitePlayer
+            }
+        }
+    }
+
+    @EventSourcingHandler
+    fun on(event: ShortCastlingNotPossibleAnyMoreEvent) {
+        when(event.color) {
+            PieceColor.WHITE -> this.shortCastlingStillPossibleByWhite = false
+            PieceColor.BLACK -> this.shortCastlingStillPossibleByBlack = false
+        }
+    }
+
+    @EventSourcingHandler
+    fun on(event: LongCastlingNotPossibleAnyMoreEvent) {
+        when(event.color) {
+            PieceColor.WHITE -> this.longCastlingStillPossibleByWhite = false
+            PieceColor.BLACK -> this.longCastlingStillPossibleByBlack = false
         }
     }
 

@@ -379,7 +379,7 @@ class BoardTest {
             D7 to BLACK_PAWN
         )
 
-        val actualResult = chessBoard.castling(CastlingType.SHORT_WHITE)
+        val actualResult = chessBoard.castlingShort(PieceColor.WHITE)
 
         val expectedResult = generateChessBoardWithSpecificSettling(settlingAfterCastling)
             .copy(lastMove = Move(WHITE_ROOK, from = H1, to = F1))
@@ -411,7 +411,7 @@ class BoardTest {
             D7 to BLACK_PAWN
         )
 
-        val actualResult = chessBoard.castling(CastlingType.LONG_WHITE)
+        val actualResult = chessBoard.castlingLong(PieceColor.WHITE)
 
         val expectedResult = generateChessBoardWithSpecificSettling(settlingAfterCastling)
             .copy(lastMove = Move(WHITE_ROOK, from = A1, to = D1))
@@ -445,7 +445,7 @@ class BoardTest {
             D7 to BLACK_PAWN
         )
 
-        val actualResult = chessBoard.castling(CastlingType.SHORT_BLACK)
+        val actualResult = chessBoard.castlingShort(PieceColor.BLACK)
 
         val expectedResult = generateChessBoardWithSpecificSettling(settlingAfterCastling)
             .copy(lastMove = Move(BLACK_ROOK, from = H8, to = F8))
@@ -479,7 +479,7 @@ class BoardTest {
             D7 to BLACK_PAWN
         )
 
-        val actualResult = chessBoard.castling(CastlingType.LONG_BLACK)
+        val actualResult = chessBoard.castlingLong(PieceColor.BLACK)
 
         val expectedResult = generateChessBoardWithSpecificSettling(settlingAfterCastling)
             .copy(lastMove = Move(BLACK_ROOK, from = A8, to = D8))

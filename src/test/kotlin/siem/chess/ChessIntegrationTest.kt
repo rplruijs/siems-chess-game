@@ -46,8 +46,8 @@ class ChessIntegrationTest {
     fun testStartEndpoint() {
         //When
         startGame("Siem", "Remco")
-        move("WHITE", "D2", "D4" )
-        move("BLACK", "D7", "D5" )
+        move("WHITE", "D2-D4" )
+        move("BLACK", "D7-D5" )
 
         assert(true)
     }
@@ -58,8 +58,8 @@ class ChessIntegrationTest {
         gameId = retrieveGameId(response)?: throw IllegalStateException("No gameId cookie found")
     }
 
-    private fun move(color: String, from: String, to: String) {
-        val moveUrl = "$url/move?color=$color&from=$from&to=$to"
+    private fun move(color: String, move: String) {
+        val moveUrl = "$url/move?color=$color&move=$move"
 
         val headers = HttpHeaders()
         headers.add("Cookie", "gameId=$gameId")

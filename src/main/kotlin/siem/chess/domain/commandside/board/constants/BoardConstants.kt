@@ -125,4 +125,3 @@ val startPositionsWithChessPiece = mapOf(
     G8 to BLACK_KNIGHT,
     H8 to BLACK_ROOK,
 )
-

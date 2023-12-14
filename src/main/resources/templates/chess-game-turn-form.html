@@ -1,17 +1,17 @@
 <div class="bg-white p-8 rounded shadow-md w-96">
     <h2 class="text-2xl font-semibold mb-6 text-center" th:text="${turn.message}"></h2>
-    <form hx-post="/api/chess-games/move" hx-target="#gameId" class="flex flex-col items-center">
+    <form id="moveForm" class="flex flex-col items-center">
         <div class="mb-2">
-            <label for="from" class="block text-gray-700 text-sm font-bold mb-2">Move</label>
+            <label for="moveInput" class="block text-gray-700 text-sm font-bold mb-2">Move</label>
             <input type="text"
-                   id="from"
-                   name="from"
+                   id="moveInput"
+                   name="moveInput"
                    class="w-full border border-gray-300 p-2 rounded-md"
                    placeholder="Example D2-D4">
         </div>
 
         <div class="flex justify-center">
-            <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+            <button id="moveButton" type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
                 Move
             </button>
         </div>
@@ -20,14 +20,13 @@
     <br/>
 
     <div class="flex justify-center" th:if="${turn.showShortCastlingButton}">
-        <button type="submit" hx-post="/api/chess-games/move/castling?castlingMove=castlingshort" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+        <button id="shortCastling" type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
             Castling short
         </button>
     </div>
     <div class="flex justify-center" th:if="${turn.showLongCastlingButton}">
-        <button type="submit" hx-post="/api/chess-games/move/castling?castlingMove=castlinglong" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+        <button id="longCastling" type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
             Castling long
         </button>
     </div>
-
 </div>

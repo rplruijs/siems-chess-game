@@ -7,14 +7,11 @@
     <title>Siems schaakspel</title>
     <!-- Include the following line to use Tailwind CSS -->
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.16/dist/tailwind.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Berkeley+Mono&display=swap">
-
     <script src="https://unpkg.com/htmx.org"></script>
 
 
     <script>
-
-        document.addEventListener('htmx:afterRequest', function (event) {
+            document.addEventListener('htmx:afterRequest', function (event) {
             const targetElement = event.detail;
 
             console.log('After request', event.detail);
@@ -29,10 +26,12 @@
         });
 
         function getUpdatesThroughServerSideEvent() {
+
+            //Moves
             const eventSourceMoves = new EventSource(`/api/chess-games/updates/move`);
             eventSourceMoves.onmessage = function (event) {
 
-                console.log('Received SSE event:', event.data);
+                console.log('Received SSE move event:', event.data);
                 const chessboardContainer = document.getElementById('chessboard');
                 chessboardContainer.innerHTML = event.data;
             };
@@ -40,10 +39,11 @@
                 console.error('SSE Error when retrieving move:', error);
             };
 
+            //Logs
             const eventSourceLogs = new EventSource(`/api/chess-games/updates/log`);
             eventSourceLogs.onmessage = function (event) {
 
-                console.log('Received SSE event:', event.data);
+                console.log('Received SSE log event:', event.data);
                 const logContainer = document.getElementById('log');
                 logContainer.innerHTML = event.data;
             };
@@ -51,20 +51,26 @@
                 console.error('SSE Error when retrieving log:', error);
             };
 
+            //Turn form
             const eventSourceNextTurn = new EventSource(`/api/chess-games/updates/turn`);
-            eventSourceLogs.onmessage = function (event) {
+            eventSourceNextTurn.onmessage = function (event) {
 
-                console.log('Received SSE event:', event.data);
-                const logContainer = document.getElementById('log');
-                logContainer.innerHTML = event.data;
+                console.log('Received SSE turn event:', event.data);
+                const turnContainer = document.getElementById('turn');
+                turnContainer.innerHTML = event.data;
+
+                const scriptElement = document.createElement('script');
+                scriptElement.src = '/js/turnHandling.js';
+                scriptElement.onload = function() {
+                    console.log('Script loaded successfully');
+
+                };
+                scriptElement.onerror = function() {
+                    console.error('Error loading script');
+
+                };
+                turnContainer.appendChild(scriptElement)
             };
-            eventSourceLogs.onerror = function (error) {
-                console.error('SSE Error when retrieving log:', error);
-            };
-
-
-
-
         }
     </script>
 </head>
@@ -76,7 +82,7 @@
 
         <h2 class="text-2xl font-semibold mb-6 text-center">Potje schaken?</h2>
 
-        <form hx-post="/api/chess-games/start" hx-target="#gameId" class="flex flex-col items-center">
+        <form hx-post="/api/chess-games/start" hx-target="#dummy" class="flex flex-col items-center">
             <div class="mb-4">
                 <label for="whitePlayer" class="block text-gray-700 text-sm font-bold mb-2">Wie gaat er met wit spelen:</label>
                 <input type="text"
@@ -101,38 +107,7 @@
         </form>
     </div>
 
-    <div id="turn">
-        <div class="bg-white p-8 rounded shadow-md w-96">
-            <h2 class="text-2xl font-semibold mb-6 text-center">Volgende zet?</h2>
-            <form hx-post="/api/chess-games/move" hx-target="#gameId" class="flex flex-col items-center">
-                <div class="mb-2">
-                    <label for="from" class="block text-gray-700 text-sm font-bold mb-2">Van</label>
-                    <input type="text"
-                           id="from"
-                           name="from"
-                           class="w-full border border-gray-300 p-2 rounded-md"
-                           placeholder="voorbeeld D2">
-                </div>
-
-                <div class="mb-2">
-                    <label for="to" class="block text-gray-700 text-sm font-bold mb-2">Naar</label>
-                    <input type="text"
-                           id="to"
-                           name="to"
-                           class="w-full border border-gray-300 p-2 rounded-md"
-                           placeholder="voorbeeld D4">
-                </div>
-                <div class="flex justify-center">
-                    <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                        Move
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-
-    <div id="gameId" hidden="hidden" class="text-center mt-4"></div>
+    <div id="turn"></div>
 
     <div id="chessboard">
         <div class="grid grid-cols-9">
@@ -188,8 +163,9 @@
 
 </div>
 <br/>
-<div id="log">
+<div id="log"></div>
 
-</div>
+<div id="dummy" hidden="hidden"></div>
+
 </body>
 </html>

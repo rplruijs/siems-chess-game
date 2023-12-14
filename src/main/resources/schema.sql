@@ -43,6 +43,11 @@ CREATE TYPE piece_color AS ENUM(
     'BLACK', 'WHITE'
 );
 
+DROP TYPE IF EXISTS game_state;
+
+CREATE TYPE game_state AS ENUM(
+    'CREATED', 'STARTED', 'PAUSED', 'ENDED'
+);
 
 
 DROP TYPE IF EXISTS actor_type;
@@ -73,6 +78,7 @@ delete from chessgameinfolog;
 create table if not exists chess_game_state
 (
     gameId varchar(54) not null primary key,
+    gameState game_state not null,
     currentTurn piece_color,
     turnNumber int not null,
     castlingShortStillPossibleByWhite boolean not null,

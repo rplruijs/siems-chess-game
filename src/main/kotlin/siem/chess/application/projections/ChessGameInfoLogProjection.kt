@@ -4,7 +4,6 @@ import org.axonframework.eventhandling.EventHandler
 import org.axonframework.queryhandling.QueryHandler
 import org.axonframework.queryhandling.QueryUpdateEmitter
 import org.springframework.stereotype.Component
-import siem.chess.adapter.`in`.rest.CastlingMove
 import siem.chess.application.repositories.ChessGameInfoLogRepository
 import siem.chess.domain.*
 import siem.chess.domain.commandside.board.constants.PieceColor
@@ -46,12 +45,32 @@ class ChessGameInfoLogProjection(val queryUpdateEmitter: QueryUpdateEmitter,
 
 
     @EventHandler
-    fun handle(event: CastlingAppliedEvent) {
+    fun handle(event: LongCastlingAppliedEvent) {
         handleLogMessage(toInfoLogMessage(event))
     }
 
     @EventHandler
-    fun handle(event: CastlingNotPossibleEvent) {
+    fun handle(event: ShortCastlingAppliedEvent) {
+        handleLogMessage(toInfoLogMessage(event))
+    }
+
+    @EventHandler
+    fun handle(event: ShortCastlingNotPossibleBecauseRookAndOrKingAreMovedAlreadyEvent) {
+        handleLogMessage(toErrorLogMessage(event))
+    }
+
+    @EventHandler
+    fun handle(event: LongCastlingNotPossibleBecauseRookAndOrKingAreMovedAlreadyEvent) {
+        handleLogMessage(toErrorLogMessage(event))
+    }
+
+    @EventHandler
+    fun handle(event: LongCastlingNotPossibleBecauseWrongSettlingEvent){
+        handleLogMessage(toErrorLogMessage(event))
+    }
+
+    @EventHandler
+    fun handle(event: ShortCastlingNotPossibleBecauseWrongSettlingEvent){
         handleLogMessage(toErrorLogMessage(event))
     }
 
@@ -108,12 +127,20 @@ class ChessGameInfoLogProjection(val queryUpdateEmitter: QueryUpdateEmitter,
                     message = "Game ended by check mate. Winner is ${event.winner}")
 
             }
-            is CastlingAppliedEvent -> {
+            is ShortCastlingAppliedEvent -> {
                 LogMessage(gameId = event.gameId,
                     logTime = event.dateTime,
-                    logMessageType = toLogMessageType(event.castlingMove),
+                    logMessageType = LogMessageType.SHORT_CASTLING,
                     causedBy = toActorType(event.pieceColor),
-                    message = toInfoLogMessage(event.castlingMove))
+                    message = toCastlingInfoLogMessage(event.pieceColor, "Short")
+                )
+            }
+            is LongCastlingAppliedEvent -> {
+                LogMessage(gameId = event.gameId,
+                    logTime = event.dateTime,
+                    logMessageType = LogMessageType.LONG_CASTLING,
+                    causedBy = toActorType(event.pieceColor),
+                    message = toCastlingInfoLogMessage(event.pieceColor, "Long"))
             }
             else                     -> throw IllegalStateException("Unsupported event")
         }
@@ -148,36 +175,60 @@ class ChessGameInfoLogProjection(val queryUpdateEmitter: QueryUpdateEmitter,
                     message = "${event.pieceColor.opposite()} turn please",
                     logLevel = LogLevel.ERROR)
             }
-            is CastlingNotPossibleEvent -> {
+            is ShortCastlingNotPossibleBecauseRookAndOrKingAreMovedAlreadyEvent -> {
                 LogMessage(
                     gameId = event.gameId,
                     logTime = event.dateTime,
-                    logMessageType = toLogMessageType(event.castlingMove),
+                    logMessageType = LogMessageType.WRONG_SHORT_CASTLING,
                     causedBy = toActorType(event.pieceColor),
-                    message =toLogMessageWrong(event.castlingMove),
+                    message = toCastlingPiecesAlreadyMovedMessage(event.pieceColor, "short"),
                     logLevel = LogLevel.ERROR)
             }
+            is LongCastlingNotPossibleBecauseRookAndOrKingAreMovedAlreadyEvent -> {
+                LogMessage(
+                    gameId = event.gameId,
+                    logTime = event.dateTime,
+                    logMessageType = LogMessageType.WRONG_LONG_CASTLING,
+                    causedBy = toActorType(event.pieceColor),
+                    message = toCastlingPiecesAlreadyMovedMessage(event.pieceColor, "long"),
+                    logLevel = LogLevel.ERROR)
+            }
+            is ShortCastlingNotPossibleBecauseWrongSettlingEvent -> {
+                LogMessage(
+                    gameId = event.gameId,
+                    logTime = event.dateTime,
+                    logMessageType = LogMessageType.WRONG_SHORT_CASTLING,
+                    causedBy = toActorType(event.pieceColor),
+                    message = toCastlingIncorrectSettlingMessage(event.pieceColor, "short"),
+                    logLevel = LogLevel.ERROR)
+            }
+            is LongCastlingNotPossibleBecauseWrongSettlingEvent -> {
+                LogMessage(
+                    gameId = event.gameId,
+                    logTime = event.dateTime,
+                    logMessageType = LogMessageType.WRONG_SHORT_CASTLING,
+                    causedBy = toActorType(event.pieceColor),
+                    message = toCastlingIncorrectSettlingMessage(event.pieceColor, "long"),
+                    logLevel = LogLevel.ERROR)
+            }
+
             else                     -> throw IllegalStateException("Unsupported event")
         }
     }
 
-    private fun toLogMessageType(castlingMove: CastlingMove) : LogMessageType {
-        return  when(castlingMove) {
-            CastlingMove.CASTLING_SHORT -> LogMessageType.SHORT_CASTLING
-            CastlingMove.CASTLING_LONG  -> LogMessageType.LONG_CASTLING
-        }
-    }
-    private fun toInfoLogMessage(castlingMove: CastlingMove): String {
-        return when(castlingMove) {
-            CastlingMove.CASTLING_SHORT -> "Short castling applied"
-            CastlingMove.CASTLING_LONG  -> "Long castling applied"
-        }
+    private fun toCastlingInfoLogMessage(color: PieceColor, castlingType: String): String {
+        return "$castlingType castling applied by ${color.name}."
     }
 
-    private fun toLogMessageWrong(castlingMove: CastlingMove): String {
-        return when(castlingMove) {
-            CastlingMove.CASTLING_SHORT -> "Short castling not possible with current settling"
-            CastlingMove.CASTLING_LONG  -> "Long castling not possible with current settling"
-        }
+    private fun toCastlingPiecesAlreadyMovedMessage(color: PieceColor, castlingType: String): String {
+        return  "Castling $castlingType not possible because the related pieces are moved already."
     }
+
+
+    private fun toCastlingIncorrectSettlingMessage(color: PieceColor, castlingType: String): String {
+        return "The current setting of ${color} is not correct for applying castling ${castlingType}."
+    }
+
+
+
 }

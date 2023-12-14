@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.*
 import reactor.core.publisher.Flux
 import siem.chess.adapter.`in`.rest.exceptions.InvalidChessMoveException
 import siem.chess.domain.*
-import siem.chess.domain.commandside.board.Position
 import siem.chess.domain.queryside.ChessGame
 import siem.chess.domain.queryside.ChessGameLog
 import siem.chess.domain.queryside.ChessGameMove
@@ -39,27 +38,32 @@ class ChessGameController(val commandGateway: CommandGateway, val queryGateway: 
     }
 
     @PostMapping("/move")
-    fun move(@RequestParam from: String, @RequestParam to: String, request: HttpServletRequest) {
-
-        val fromPosition: Position = parseChessPosition(from) ?: throw InvalidChessMoveException("from position $from is invalid")
-        val toPosition: Position = parseChessPosition(to)   ?: throw InvalidChessMoveException("to position $to is invalid")
-
+    fun move(@RequestParam moveInput: String, request: HttpServletRequest) {
+        val move = parseChessMove(moveInput)
         commandGateway.send<MoveChessPieceCommand>(
             MoveChessPieceCommand(gameId = extractGameIdFromCookie(request),
                 dateTime = LocalDateTime.now(),
-                from = fromPosition,
-                to = toPosition)
+                from = move.first,
+                to = move.second)
         )
     }
 
-    @PostMapping("/move/castling")
-    fun castlingMove(@RequestParam castlingMove: String, request: HttpServletRequest) {
-
-        commandGateway.send<CastlingCommand>(
-            CastlingCommand(
+    @PostMapping("/move/castling/short")
+    fun castlingShortMove(request: HttpServletRequest) {
+        commandGateway.send<ShortCastlingCommand>(
+            ShortCastlingCommand(
                 gameId = extractGameIdFromCookie(request),
-                dateTime = LocalDateTime.now(),
-                castlingMove = parseCastlingMove(castlingMove)
+                dateTime = LocalDateTime.now()
+            )
+        )
+    }
+
+    @PostMapping("/move/castling/long")
+    fun castlingLongMove(request: HttpServletRequest) {
+        commandGateway.send<LongCastlingCommand>(
+            LongCastlingCommand(
+                gameId = extractGameIdFromCookie(request),
+                dateTime = LocalDateTime.now()
             )
         )
     }

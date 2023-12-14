@@ -3,7 +3,6 @@ package siem.chess.domain
 import org.axonframework.test.aggregate.AggregateTestFixture
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import siem.chess.adapter.`in`.rest.CastlingMove
 import siem.chess.domain.commandside.ChessGameAggregate
 import siem.chess.domain.commandside.board.boardTextualOpeningSettling
 import siem.chess.domain.commandside.board.constants.*
@@ -59,22 +58,22 @@ class ChessGameAggregateTest {
             MoveChessPieceCommand(gameId, now, D7, D6),
             MoveChessPieceCommand(gameId, now, G1, H3),
             MoveChessPieceCommand(gameId, now, A7, A6),
-        ).`when`(CastlingCommand(gameId, now, CastlingMove.CASTLING_SHORT))
-            .expectEvents(CastlingAppliedEvent(gameId, now, PieceColor.WHITE, CastlingMove.CASTLING_SHORT, toBeBoardTextual))
+        ).`when`(ShortCastlingCommand(gameId, now))
+            .expectEvents(ShortCastlingAppliedEvent(gameId, now, PieceColor.WHITE, toBeBoardTextual))
     }
 
 
     @Test
     fun `the famous d2-d4 opening should apply the correct event` () {
         val toBeBoardTextual = """
-            WHITE_ROOK,WHITE_KNIGHT,WHITE_BISHOP,WHITE_KING,WHITE_QUEEN,WHITE_BISHOP,WHITE_KNIGHT,WHITE_ROOK,
+            WHITE_ROOK,WHITE_KNIGHT,WHITE_BISHOP,WHITE_QUEEN,WHITE_KING,WHITE_BISHOP,WHITE_KNIGHT,WHITE_ROOK,
             WHITE_PAWN,WHITE_PAWN,WHITE_PAWN,X,WHITE_PAWN,WHITE_PAWN,WHITE_PAWN,WHITE_PAWN,
             X,X,X,X,X,X,X,X,
             X,X,X,WHITE_PAWN,X,X,X,X,
             X,X,X,X,X,X,X,X,
             X,X,X,X,X,X,X,X,
             BLACK_PAWN,BLACK_PAWN,BLACK_PAWN,BLACK_PAWN,BLACK_PAWN,BLACK_PAWN,BLACK_PAWN,BLACK_PAWN,
-            BLACK_ROOK,BLACK_KNIGHT,BLACK_BISHOP,BLACK_KING,BLACK_QUEEN,BLACK_BISHOP,BLACK_KNIGHT,BLACK_ROOK
+            BLACK_ROOK,BLACK_KNIGHT,BLACK_BISHOP,BLACK_QUEEN,BLACK_KING,BLACK_BISHOP,BLACK_KNIGHT,BLACK_ROOK
             
         """.trimIndent().replace(Regex("[\\r\\n]"), "")
 
@@ -98,6 +97,4 @@ class ChessGameAggregateTest {
         val d2d4MOve = MoveChessPieceCommand(gameId, now, D2, D4)
         val e2e4MOve = MoveChessPieceCommand(gameId, now, E2, E4)
     }
-
-
 }
